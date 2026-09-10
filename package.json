@@ -1,0 +1,18 @@
+{
+  "name": "poly-home-3d",
+  "version": "1.0.0",
+  "description": "Home Assistant 3D 户型中控卡片",
+  "main": "dist/poly-home-3d.js",
+  "scripts": {
+    "build": "./build.sh"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "@mdi/js": "^7.4.47",
+    "esbuild": "^0.23.1",
+    "three": "^0.165.0"
+  }
+}

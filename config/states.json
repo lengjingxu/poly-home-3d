@@ -1,0 +1,62 @@
+{
+  "light.ke_ting_zhu_deng": [
+    "on",
+    "客厅主灯"
+  ],
+  "light.ke_ting_she_deng": [
+    "on",
+    "客厅射灯"
+  ],
+  "light.ke_ting_deng_dai": [
+    "off",
+    "客厅灯带"
+  ],
+  "light.can_ting_zhu_deng": [
+    "off",
+    "餐厅主灯"
+  ],
+  "light.chu_fang_zhu_deng": [
+    "off",
+    "厨房主灯"
+  ],
+  "light.xuan_guan_she_deng": [
+    "on",
+    "玄关射灯"
+  ],
+  "light.zou_lang_she_deng_kai_guan": [
+    "on",
+    "走廊射灯"
+  ],
+  "climate.ke_ting_kong_diao": [
+    "cool",
+    "客厅空调"
+  ],
+  "climate.zhu_wo_kong_diao": [
+    "off",
+    "主卧空调"
+  ],
+  "climate.ci_wo_yi_kong_diao": [
+    "off",
+    "次卧一空调"
+  ],
+  "climate.ci_wo_er_kong_diao": [
+    "heat",
+    "次卧二空调"
+  ],
+  "climate.bei_ci_wo_kong_diao": [
+    "off",
+    "北次卧空调"
+  ],
+  "fan.mai_di_long_xin_feng_chrv_1525b_qr_d_fhd": [
+    "on",
+    "新风"
+  ],
+  "binary_sensor.zhi_neng_men_chuang_ci": [
+    "off",
+    "入户门磁"
+  ],
+  "sun.sun": [
+    "above_horizon",
+    "Sun"
+  ]
+}

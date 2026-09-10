@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8" />
+<title>3D 中控预览</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0a0b0e; }
+  .stage { position: absolute; inset: 0; }
+  poly-home-3d { display: block; width: 100%; height: 100%; }
+</style>
+<script type="module" src="/dist/poly-home-3d.js"></script>
+</head>
+<body>
+<div class="stage"><poly-home-3d id="card"></poly-home-3d></div>
+<script type="module">
+async function boot() {
+  const q = new URLSearchParams(location.search);
+  const stub = await fetch("/config/states.json").then((r) => r.json());
+  if (q.get("sun")) stub["sun.sun"] = [q.get("sun"), "Sun"];
+  if (q.get("lights") === "all") {
+    for (const k of Object.keys(stub)) if (k.startsWith("light.")) stub[k][0] = "on";
+  }
+  if (q.get("lights") === "off") {
+    for (const k of Object.keys(stub)) if (k.startsWith("light.")) stub[k][0] = "off";
+  }
+  const now = new Date().toISOString();
+  const states = {};
+  for (const [id, [state, name]] of Object.entries(stub)) {
+    states[id] = {
+      entity_id: id, state, attributes: { friendly_name: name },
+      last_changed: now, last_updated: now,
+      context: { id: "x", user_id: null, parent_id: null },
+    };
+    if (id.startsWith("light.")) states[id].attributes.supported_color_modes = ["onoff"];
+    if (id.startsWith("climate.")) states[id].attributes.current_temperature = 24.5;
+  }
+  const hass = {
+    states,
+    callService: (...a) => { (window.__calls = window.__calls || []).push(a.join("|")); },
+    callWS: async () => [],
+    connection: { sendMessagePromise: async () => [], subscribeMessage: async () => () => {} },
+    user: { is_admin: false, name: "preview" },
+    language: "zh-Hans",
+    locale: { language: "zh-Hans", number_format: "comma_decimal" },
+    formatEntityState: (s) => s.state,
+    localize: (k) => k,
+  };
+  const config = { type: "custom:poly-home-3d", config_url: "/dist/floorplan.json" };
+  if (q.get("shadows") === "0") config.shadows = false;
+  if (q.get("bloom")) config.bloom = Number(q.get("bloom"));
+  if (q.get("rail") === "0") config.show_rail = false;
+  const card = document.getElementById("card");
+  card.setConfig(config);
+  card.hass = hass;
+  if (q.get("focus")) setTimeout(() => card._focusRoom(q.get("focus")), 1200);
+  window.__ready = true;
+}
+boot();
+</script>
+</body>
+</html>
+
