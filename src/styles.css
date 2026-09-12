@@ -87,6 +87,12 @@ ha-card { height: 100%; display: block; background: transparent; border: none; b
   white-space: nowrap; pointer-events: none; transition: color 0.3s; }
 .roomlbl.lit { color: rgba(255,206,158,0.9); }
 
+.wrap[data-layout="shell-right"] .rail { left: auto; right: 22px; }
+.wrap[data-layout="shell-left"] .rail { left: 22px; right: auto; }
+.wrap[data-layout^="shell-"] .scenes {
+  transform: translateX(calc(-50% - var(--poly-layout-offset-x, 0px)));
+}
+
 @media (max-width: 700px) {
   .top { left: 14px; right: 14px; top: 12px; gap: 8px; }
   .brand h1 { font-size: 16px; }
