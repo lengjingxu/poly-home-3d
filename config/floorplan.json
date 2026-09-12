@@ -1,113 +1,52 @@
 {
   "type": "custom:poly-home-3d",
   "title": "上海家庭",
-  "subtitle": "保利智家 · 局域网直连",
+  "subtitle": "两室大客厅 · 客餐厨一体",
   "model": "/model/poly-home.glb",
   "accent": "#ffb066",
   "background": "#0b0d10",
   "shadow": true,
   "rooms": [
     {
-      "name": "客厅",
-      "rect": [
-        2.8,
-        4.6,
-        7,
-        8
-      ],
+      "name": "客餐厨",
+      "rect": [1.75, 6.5, 10.95, 13],
       "lights": [
         "light.ke_ting_zhu_deng",
         "light.ke_ting_she_deng",
-        "light.ke_ting_deng_dai"
-      ]
-    },
-    {
-      "name": "餐厅",
-      "rect": [
-        2.8,
-        2.4,
-        7,
-        4.4
-      ],
-      "lights": [
-        "light.can_ting_zhu_deng"
-      ]
-    },
-    {
-      "name": "厨房",
-      "rect": [
-        7.2,
-        2.4,
-        11,
-        4.6
-      ],
-      "lights": [
+        "light.ke_ting_deng_dai",
+        "light.can_ting_zhu_deng",
         "light.chu_fang_zhu_deng"
       ]
     },
     {
-      "name": "玄关",
-      "rect": [
-        0,
-        6.4,
-        2.6,
-        8
-      ],
-      "lights": [
-        "light.xuan_guan_she_deng"
-      ]
+      "name": "主卧",
+      "rect": [1.9, 0, 6, 4.4],
+      "lights": []
+    },
+    {
+      "name": "次卧",
+      "rect": [1.75, 3.85, 4.7, 6.4],
+      "lights": []
+    },
+    {
+      "name": "衣帽间",
+      "rect": [6, 1.9, 8.55, 4.45],
+      "lights": []
+    },
+    {
+      "name": "卫生间",
+      "rect": [6.1, 4.58, 8.55, 6.2],
+      "lights": []
     },
     {
       "name": "走廊",
-      "rect": [
-        0,
-        3.3,
-        2.6,
-        6.2
-      ],
-      "lights": [
-        "light.zou_lang_she_deng_kai_guan"
-      ]
+      "rect": [4.68, 4.4, 6.05, 6.45],
+      "lights": ["light.zou_lang_she_deng_kai_guan"]
     },
     {
-      "name": "主卧",
-      "rect": [
-        7.2,
-        4.8,
-        11,
-        8
-      ],
-      "lights": []
-    },
-    {
-      "name": "次卧一",
-      "rect": [
-        2.8,
-        0,
-        7,
-        2.2
-      ],
-      "lights": []
-    },
-    {
-      "name": "次卧二",
-      "rect": [
-        0,
-        0,
-        2.6,
-        3.1
-      ],
-      "lights": []
-    },
-    {
-      "name": "北次卧",
-      "rect": [
-        7.2,
-        0,
-        11,
-        2.2
-      ],
-      "lights": []
+      "name": "玄关",
+      "rect": [0.05, 8.45, 1.75, 10.65],
+      "lights": ["light.xuan_guan_she_deng"]
     }
   ],
   "markers": [
@@ -115,113 +54,100 @@
       "entity": "light.ke_ting_zhu_deng",
       "name": "客厅主灯",
       "icon": "mdi:ceiling-light",
-      "x": 4.9,
+      "x": 5.2,
       "y": 1.15,
-      "z": 6.3
+      "z": 10.55
     },
     {
       "entity": "light.ke_ting_she_deng",
-      "name": "客厅射灯", "cone": true,
+      "name": "客厅射灯",
+      "cone": true,
       "icon": "mdi:spotlight-beam",
-      "x": 3.7,
+      "x": 4,
       "y": 1.15,
-      "z": 5.3
+      "z": 9.45
     },
     {
       "entity": "light.ke_ting_deng_dai",
       "name": "客厅灯带",
       "icon": "mdi:led-strip-variant",
-      "x": 4.9,
+      "x": 5.25,
       "y": 1.05,
-      "z": 7.7
+      "z": 11.75
     },
     {
       "entity": "light.can_ting_zhu_deng",
       "name": "餐厅主灯",
       "icon": "mdi:ceiling-light",
-      "x": 4.9,
+      "x": 3.35,
       "y": 1.15,
-      "z": 3.4
+      "z": 8.05
     },
     {
       "entity": "light.chu_fang_zhu_deng",
-      "name": "厨房主灯",
+      "name": "开放厨房主灯",
       "icon": "mdi:ceiling-light",
-      "x": 8.3,
+      "x": 7.35,
       "y": 1.15,
-      "z": 3.5
+      "z": 7.55
     },
     {
       "entity": "light.xuan_guan_she_deng",
-      "name": "玄关射灯", "cone": true,
+      "name": "玄关射灯",
+      "cone": true,
       "icon": "mdi:spotlight-beam",
-      "x": 1.3,
+      "x": 0.95,
       "y": 1.15,
-      "z": 7.2
+      "z": 9.5
     },
     {
       "entity": "light.zou_lang_she_deng_kai_guan",
-      "name": "走廊射灯", "cone": true,
+      "name": "走廊射灯",
+      "cone": true,
       "icon": "mdi:spotlight-beam",
-      "x": 1.3,
+      "x": 5.45,
       "y": 1.15,
-      "z": 4.8
+      "z": 5.45
     },
     {
       "entity": "climate.ke_ting_kong_diao",
       "name": "客厅空调",
       "icon": "mdi:air-conditioner",
-      "x": 6.4,
+      "x": 8.2,
       "y": 1,
-      "z": 5.2
+      "z": 10.25
     },
     {
       "entity": "climate.zhu_wo_kong_diao",
       "name": "主卧空调",
       "icon": "mdi:air-conditioner",
-      "x": 9.6,
+      "x": 5.25,
       "y": 1,
-      "z": 6
+      "z": 1.1
     },
     {
       "entity": "climate.ci_wo_yi_kong_diao",
-      "name": "次卧一空调",
+      "name": "次卧空调",
       "icon": "mdi:air-conditioner",
-      "x": 4,
+      "x": 2.25,
       "y": 1,
-      "z": 1.1
-    },
-    {
-      "entity": "climate.ci_wo_er_kong_diao",
-      "name": "次卧二空调",
-      "icon": "mdi:air-conditioner",
-      "x": 1,
-      "y": 1,
-      "z": 1.5
-    },
-    {
-      "entity": "climate.bei_ci_wo_kong_diao",
-      "name": "北次卧空调",
-      "icon": "mdi:air-conditioner",
-      "x": 8.3,
-      "y": 1,
-      "z": 1.1
+      "z": 5.15
     },
     {
       "entity": "fan.mai_di_long_xin_feng_chrv_1525b_qr_d_fhd",
       "name": "新风",
       "icon": "mdi:fan",
-      "x": 10.3,
+      "x": 8.15,
       "y": 1,
-      "z": 4.2
+      "z": 7.9
     },
     {
       "entity": "binary_sensor.zhi_neng_men_chuang_ci",
       "name": "入户门磁",
       "icon": "mdi:door-closed",
-      "x": 1.5,
+      "x": 0.22,
       "y": 1.05,
-      "z": 7.85
+      "z": 10.1
     }
   ],
   "scenes": [
@@ -253,9 +179,7 @@
       "name": "观影",
       "icon": "mdi:sofa",
       "service": "light.turn_on",
-      "targets": [
-        "light.ke_ting_deng_dai"
-      ]
+      "targets": ["light.ke_ting_deng_dai"]
     },
     {
       "name": "全开",

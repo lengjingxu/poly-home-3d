@@ -37,15 +37,7 @@
   ],
   "climate.ci_wo_yi_kong_diao": [
     "off",
-    "次卧一空调"
-  ],
-  "climate.ci_wo_er_kong_diao": [
-    "heat",
-    "次卧二空调"
-  ],
-  "climate.bei_ci_wo_kong_diao": [
-    "off",
-    "北次卧空调"
+    "次卧空调"
   ],
   "fan.mai_di_long_xin_feng_chrv_1525b_qr_d_fhd": [
     "on",
