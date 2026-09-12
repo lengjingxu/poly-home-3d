@@ -62,7 +62,7 @@ config_url: /hacsfiles/poly-home-3d/floorplan.json
 
 ## 换模型
 
-`model/build_model.py` 里 `ROOMS` 定义房间矩形，`WINDOWS` 定义窗洞，`furniture()` 摆家具，改完跑 `./build.sh` 重新生成。用别的建模软件导出的 glb 也可以，把 `model` 指过去就行，但房间 `rect` 要按新模型的坐标系重写。
+`model/build_model.py` 里 `ROOM_POLYGONS` 定义房间轮廓，`OUTER_WALL` 定义外墙，`furniture()` 摆家具，改完跑 `./build.sh` 重新生成。用别的建模软件导出的 glb 也可以，把 `model` 指过去就行，但房间 `rect` 要按新模型的坐标系重写。
 
 ## 本地开发
 
@@ -72,6 +72,8 @@ npm ci
 python3 -m http.server 8899
 open http://127.0.0.1:8899/preview.html
 ```
+
+构建时会按 glb 内容生成模型 URL 的版本参数，HA 更新模型后不会继续使用旧浏览器缓存。
 
 `preview.html` 用 `config/states.json` 当假状态，查询参数可以换环境：
 

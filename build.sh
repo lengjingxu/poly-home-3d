@@ -10,9 +10,14 @@ python3 model/build_model.py
   --loader:.css=text --outfile=dist/poly-home-3d.js
 
 python3 - <<'PY'
-import json, pathlib
+import hashlib
+import json
+import pathlib
+
 cfg = json.loads(pathlib.Path("config/floorplan.json").read_text())
-cfg["model"] = "poly-home.glb"
+model = pathlib.Path("model/poly-home.glb")
+version = hashlib.sha1(model.read_bytes()).hexdigest()[:10]
+cfg["model"] = "poly-home.glb?v=" + version
 pathlib.Path("dist/floorplan.json").write_text(
     json.dumps(cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 print("dist/floorplan.json")

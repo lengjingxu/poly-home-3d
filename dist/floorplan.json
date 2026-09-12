@@ -2,7 +2,7 @@
   "type": "custom:poly-home-3d",
   "title": "上海家庭",
   "subtitle": "两室大客厅 · 客餐厨一体",
-  "model": "poly-home.glb",
+  "model": "poly-home.glb?v=88f6ac1379",
   "accent": "#ffb066",
   "background": "#0b0d10",
   "shadow": true,
