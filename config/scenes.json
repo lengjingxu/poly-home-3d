@@ -1,0 +1,568 @@
+{
+  "poly_home_arrive": {
+    "alias": "全屋 · 回家",
+    "description": "开启玄关、客厅和餐厅灯；客厅智能主灯调为 3000 K、70%。",
+    "icon": "mdi:home-import-outline",
+    "mode": "single",
+    "sequence": [
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.xuan_guan_she_deng', 'light.ke_ting_zhu_deng', 'light.can_ting_zhu_deng']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_on",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            }
+          }
+        ]
+      },
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.gdds_cn_2142937389_wy0a02_s_2_light']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_on",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            },
+            "data": {
+              "color_temp_kelvin": 3000,
+              "brightness_pct": 70
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "poly_home_leave": {
+    "alias": "全屋 · 离家",
+    "description": "关闭全屋灯光和空调。",
+    "icon": "mdi:home-export-outline",
+    "mode": "single",
+    "sequence": [
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.ke_ting_zhu_deng', 'light.ke_ting_she_deng', 'light.ke_ting_deng_dai', 'light.can_ting_zhu_deng', 'light.chu_fang_zhu_deng', 'light.xuan_guan_she_deng', 'light.zou_lang_she_deng_kai_guan', 'light.gdds_cn_2142937389_wy0a02_s_2_light', 'light.gdds_cn_2142937411_wy0a02_s_2_light', 'light.gdds_cn_2143042180_wy0a02_s_2_light', 'light.gdds_cn_2143044426_wy0a02_s_2_light', 'light.comely_cn_2008156648_wy0a01_s_2_light', 'light.comely_cn_2008263289_wy0a01_s_2_light']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_off",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            }
+          }
+        ]
+      },
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['climate.759413_cn_x_2903_3819083_0113a8a41b3de3e4_c_5_13_iez', 'climate.759413_cn_x_2903_3819083_011306a20d3de3e4_c_5_13_iez', 'climate.759413_cn_x_2903_3819083_0113649d193de3e4_c_5_13_iez', 'climate.759413_cn_x_2903_3819083_0113ba640d3de3e4_c_5_13_iez', 'climate.759413_cn_x_2903_3819083_01133a780d3de3e4_c_5_13_iez']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "climate.turn_off",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "poly_home_cinema": {
+    "alias": "全屋 · 观影",
+    "description": "关闭客餐厨主照明，开启客厅灯带，智能主灯调为 2700 K、8%。",
+    "icon": "mdi:sofa",
+    "mode": "single",
+    "sequence": [
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.ke_ting_she_deng', 'light.can_ting_zhu_deng', 'light.chu_fang_zhu_deng', 'light.xuan_guan_she_deng', 'light.zou_lang_she_deng_kai_guan', 'light.gdds_cn_2142937411_wy0a02_s_2_light', 'light.comely_cn_2008156648_wy0a01_s_2_light', 'light.comely_cn_2008263289_wy0a01_s_2_light']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_off",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            }
+          }
+        ]
+      },
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.ke_ting_deng_dai']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_on",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            }
+          }
+        ]
+      },
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.gdds_cn_2142937389_wy0a02_s_2_light']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_on",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            },
+            "data": {
+              "color_temp_kelvin": 2700,
+              "brightness_pct": 8
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "poly_home_dining": {
+    "alias": "全屋 · 就餐",
+    "description": "开启餐厅主灯和客厅灯带，客厅智能主灯调为 3000 K、35%。",
+    "icon": "mdi:lightbulb",
+    "mode": "single",
+    "sequence": [
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.can_ting_zhu_deng', 'light.ke_ting_deng_dai']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_on",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            }
+          }
+        ]
+      },
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.gdds_cn_2142937389_wy0a02_s_2_light']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_on",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            },
+            "data": {
+              "color_temp_kelvin": 3000,
+              "brightness_pct": 35
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "poly_home_reading": {
+    "alias": "全屋 · 阅读",
+    "description": "开启客厅主灯，智能主灯调为 4000 K、90%。",
+    "icon": "mdi:lightbulb",
+    "mode": "single",
+    "sequence": [
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.ke_ting_zhu_deng']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_on",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            }
+          }
+        ]
+      },
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.gdds_cn_2142937389_wy0a02_s_2_light']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_on",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            },
+            "data": {
+              "color_temp_kelvin": 4000,
+              "brightness_pct": 90
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "poly_home_sleep": {
+    "alias": "全屋 · 睡眠",
+    "description": "关闭客餐厨和走廊灯，卧室智能灯调为 2700 K、8%。关闭主卧窗帘和纱帘。",
+    "icon": "mdi:weather-night",
+    "mode": "single",
+    "sequence": [
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.ke_ting_zhu_deng', 'light.ke_ting_she_deng', 'light.ke_ting_deng_dai', 'light.can_ting_zhu_deng', 'light.chu_fang_zhu_deng', 'light.xuan_guan_she_deng', 'light.zou_lang_she_deng_kai_guan', 'light.gdds_cn_2142937389_wy0a02_s_2_light', 'light.gdds_cn_2142937411_wy0a02_s_2_light', 'light.comely_cn_2008156648_wy0a01_s_2_light', 'light.comely_cn_2008263289_wy0a01_s_2_light']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_off",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            }
+          }
+        ]
+      },
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.gdds_cn_2143042180_wy0a02_s_2_light']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_on",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            },
+            "data": {
+              "color_temp_kelvin": 2700,
+              "brightness_pct": 8
+            }
+          }
+        ]
+      },
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.gdds_cn_2143044426_wy0a02_s_2_light']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_on",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            },
+            "data": {
+              "color_temp_kelvin": 2700,
+              "brightness_pct": 8
+            }
+          }
+        ]
+      },
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['cover.dooya_cn_2183387577_dt98_s_2_curtain', 'cover.dooya_cn_2183429288_dt98_s_2_curtain']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "cover.close_cover",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "poly_home_all_on": {
+    "alias": "全屋 · 全开",
+    "description": "开启全屋灯光，智能灯调为 4000 K、100%。",
+    "icon": "mdi:lightbulb-group",
+    "mode": "single",
+    "sequence": [
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.ke_ting_zhu_deng', 'light.ke_ting_she_deng', 'light.ke_ting_deng_dai', 'light.can_ting_zhu_deng', 'light.chu_fang_zhu_deng', 'light.xuan_guan_she_deng', 'light.zou_lang_she_deng_kai_guan', 'light.gdds_cn_2142937389_wy0a02_s_2_light', 'light.gdds_cn_2142937411_wy0a02_s_2_light', 'light.gdds_cn_2143042180_wy0a02_s_2_light', 'light.gdds_cn_2143044426_wy0a02_s_2_light', 'light.comely_cn_2008156648_wy0a01_s_2_light', 'light.comely_cn_2008263289_wy0a01_s_2_light']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_on",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            }
+          }
+        ]
+      },
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.gdds_cn_2142937389_wy0a02_s_2_light']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_on",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            },
+            "data": {
+              "color_temp_kelvin": 4000,
+              "brightness_pct": 100
+            }
+          }
+        ]
+      },
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.gdds_cn_2142937411_wy0a02_s_2_light']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_on",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            },
+            "data": {
+              "color_temp_kelvin": 4000,
+              "brightness_pct": 100
+            }
+          }
+        ]
+      },
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.gdds_cn_2143042180_wy0a02_s_2_light']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_on",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            },
+            "data": {
+              "color_temp_kelvin": 4000,
+              "brightness_pct": 100
+            }
+          }
+        ]
+      },
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.gdds_cn_2143044426_wy0a02_s_2_light']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_on",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            },
+            "data": {
+              "color_temp_kelvin": 4000,
+              "brightness_pct": 100
+            }
+          }
+        ]
+      },
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.comely_cn_2008156648_wy0a01_s_2_light']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_on",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            },
+            "data": {
+              "color_temp_kelvin": 4000,
+              "brightness_pct": 100
+            }
+          }
+        ]
+      },
+      {
+        "variables": {
+          "scene_targets": "{{ expand(['light.comely_cn_2008263289_wy0a01_s_2_light']) | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list }}"
+        }
+      },
+      {
+        "if": [
+          {
+            "condition": "template",
+            "value_template": "{{ scene_targets | count > 0 }}"
+          }
+        ],
+        "then": [
+          {
+            "action": "light.turn_on",
+            "target": {
+              "entity_id": "{{ scene_targets }}"
+            },
+            "data": {
+              "color_temp_kelvin": 4000,
+              "brightness_pct": 100
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

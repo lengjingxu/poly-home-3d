@@ -188,36 +188,6 @@
       "room": "走廊"
     },
     {
-      "entity": "climate.ke_ting_kong_diao",
-      "name": "客厅空调",
-      "icon": "mdi:air-conditioner",
-      "x": 11.8,
-      "y": 1,
-      "z": 7.2,
-      "source": "保利",
-      "room": "客餐厨"
-    },
-    {
-      "entity": "climate.zhu_wo_kong_diao",
-      "name": "主卧空调",
-      "icon": "mdi:air-conditioner",
-      "x": 2.6,
-      "y": 1,
-      "z": 5.1,
-      "source": "保利",
-      "room": "主卧"
-    },
-    {
-      "entity": "climate.ci_wo_yi_kong_diao",
-      "name": "次卧空调",
-      "icon": "mdi:air-conditioner",
-      "x": 5.6,
-      "y": 1,
-      "z": 5.1,
-      "source": "保利",
-      "room": "次卧"
-    },
-    {
       "entity": "fan.mai_di_long_xin_feng_chrv_1525b_qr_d_fhd",
       "name": "新风",
       "icon": "mdi:fan",
@@ -293,7 +263,7 @@
     },
     {
       "entity": "climate.759413_cn_x_2903_3819083_0113a8a41b3de3e4_c_5_13_iez",
-      "name": "米家客厅空调",
+      "name": "客厅空调",
       "source": "小米",
       "icon": "mdi:air-conditioner",
       "room": "客餐厨",
@@ -303,7 +273,7 @@
     },
     {
       "entity": "climate.759413_cn_x_2903_3819083_011306a20d3de3e4_c_5_13_iez",
-      "name": "米家客厅 X 空间空调",
+      "name": "客厅 X 空间空调",
       "source": "小米",
       "icon": "mdi:air-conditioner",
       "room": "客餐厨",
@@ -313,7 +283,7 @@
     },
     {
       "entity": "climate.759413_cn_x_2903_3819083_0113649d193de3e4_c_5_13_iez",
-      "name": "米家衣帽间空调",
+      "name": "衣帽间空调",
       "source": "小米",
       "icon": "mdi:air-conditioner",
       "room": "衣帽间",
@@ -323,7 +293,7 @@
     },
     {
       "entity": "climate.759413_cn_x_2903_3819083_0113ba640d3de3e4_c_5_13_iez",
-      "name": "米家主卧空调",
+      "name": "主卧空调",
       "source": "小米",
       "icon": "mdi:air-conditioner",
       "room": "主卧",
@@ -333,7 +303,7 @@
     },
     {
       "entity": "climate.759413_cn_x_2903_3819083_01133a780d3de3e4_c_5_13_iez",
-      "name": "米家次卧空调",
+      "name": "次卧空调",
       "source": "小米",
       "icon": "mdi:air-conditioner",
       "room": "次卧",
@@ -373,104 +343,88 @@
       "tap_action": "more-info"
     },
     {
-      "entity": "number.miir_cn_ir_2077736360269467649_ir02_ir_temperature_p_2_2",
-      "name": "米家红外空调控制器",
+      "entity": "cover.dooya_cn_2183387577_dt98_s_2_curtain",
+      "name": "主卧纱帘",
       "source": "小米",
-      "icon": "mdi:remote",
-      "room": "客餐厨",
-      "x": 11.3,
-      "y": 0.7,
-      "z": 3.6,
-      "controls": [
-        {
-          "entity": "button.miir_cn_ir_2077736360269467649_ir02_turn_on_a_2_6",
-          "name": "开机"
-        },
-        {
-          "entity": "button.miir_cn_ir_2077736360269467649_ir02_turn_off_a_2_5",
-          "name": "关机"
-        },
-        {
-          "entity": "button.miir_cn_ir_2077736360269467649_ir02_temperature_up_a_2_4",
-          "name": "升温"
-        },
-        {
-          "entity": "button.miir_cn_ir_2077736360269467649_ir02_temperature_down_a_2_3",
-          "name": "降温"
-        },
-        {
-          "entity": "button.miir_cn_ir_2077736360269467649_ir02_fan_speed_up_a_2_2",
-          "name": "增大风速"
-        },
-        {
-          "entity": "button.miir_cn_ir_2077736360269467649_ir02_fan_speed_down_a_2_1",
-          "name": "减小风速"
-        },
-        {
-          "entity": "select.miir_cn_ir_2077736360269467649_ir02_ir_mode_p_2_1",
-          "name": "运行模式"
-        }
-      ]
+      "room": "主卧",
+      "icon": "mdi:curtains",
+      "x": 1.0,
+      "y": 1.0,
+      "z": 9.25
+    },
+    {
+      "entity": "cover.dooya_cn_2183429288_dt98_s_2_curtain",
+      "name": "主卧窗帘",
+      "source": "小米",
+      "room": "主卧",
+      "icon": "mdi:curtains",
+      "x": 2.4,
+      "y": 1.0,
+      "z": 9.25
     }
   ],
   "scenes": [
     {
       "name": "回家",
       "icon": "mdi:home-import-outline",
-      "service": "light.turn_on",
+      "description": "开启玄关、客厅和餐厅灯；客厅智能主灯调为 3000 K、70%。",
+      "service": "script.turn_on",
       "targets": [
-        "light.xuan_guan_she_deng",
-        "light.ke_ting_zhu_deng",
-        "light.can_ting_zhu_deng",
-        "light.gdds_cn_2142937389_wy0a02_s_2_light"
+        "script.poly_home_arrive"
       ]
     },
     {
       "name": "离家",
       "icon": "mdi:home-export-outline",
-      "service": "light.turn_off",
+      "description": "关闭全屋灯光和空调。",
+      "service": "script.turn_on",
       "targets": [
-        "light.ke_ting_zhu_deng",
-        "light.ke_ting_she_deng",
-        "light.ke_ting_deng_dai",
-        "light.can_ting_zhu_deng",
-        "light.chu_fang_zhu_deng",
-        "light.xuan_guan_she_deng",
-        "light.zou_lang_she_deng_kai_guan",
-        "light.gdds_cn_2142937389_wy0a02_s_2_light",
-        "light.gdds_cn_2142937411_wy0a02_s_2_light",
-        "light.gdds_cn_2143042180_wy0a02_s_2_light",
-        "light.gdds_cn_2143044426_wy0a02_s_2_light",
-        "light.comely_cn_2008156648_wy0a01_s_2_light",
-        "light.comely_cn_2008263289_wy0a01_s_2_light"
+        "script.poly_home_leave"
       ]
     },
     {
       "name": "观影",
       "icon": "mdi:sofa",
-      "service": "light.turn_on",
+      "description": "关闭客餐厨主照明，开启客厅灯带，智能主灯调为 2700 K、8%。",
+      "service": "script.turn_on",
       "targets": [
-        "light.ke_ting_deng_dai"
+        "script.poly_home_cinema"
+      ]
+    },
+    {
+      "name": "就餐",
+      "icon": "mdi:lightbulb",
+      "description": "开启餐厅主灯和客厅灯带，客厅智能主灯调为 3000 K、35%。",
+      "service": "script.turn_on",
+      "targets": [
+        "script.poly_home_dining"
+      ]
+    },
+    {
+      "name": "阅读",
+      "icon": "mdi:lightbulb",
+      "description": "开启客厅主灯，智能主灯调为 4000 K、90%。",
+      "service": "script.turn_on",
+      "targets": [
+        "script.poly_home_reading"
+      ]
+    },
+    {
+      "name": "睡眠",
+      "icon": "mdi:weather-night",
+      "description": "关闭客餐厨和走廊灯，卧室智能灯调为 2700 K、8%。关闭主卧窗帘和纱帘。",
+      "service": "script.turn_on",
+      "targets": [
+        "script.poly_home_sleep"
       ]
     },
     {
       "name": "全开",
       "icon": "mdi:lightbulb-group",
-      "service": "light.turn_on",
+      "description": "开启全屋灯光，智能灯调为 4000 K、100%。",
+      "service": "script.turn_on",
       "targets": [
-        "light.ke_ting_zhu_deng",
-        "light.ke_ting_she_deng",
-        "light.ke_ting_deng_dai",
-        "light.can_ting_zhu_deng",
-        "light.chu_fang_zhu_deng",
-        "light.xuan_guan_she_deng",
-        "light.zou_lang_she_deng_kai_guan",
-        "light.gdds_cn_2142937389_wy0a02_s_2_light",
-        "light.gdds_cn_2142937411_wy0a02_s_2_light",
-        "light.gdds_cn_2143042180_wy0a02_s_2_light",
-        "light.gdds_cn_2143044426_wy0a02_s_2_light",
-        "light.comely_cn_2008156648_wy0a01_s_2_light",
-        "light.comely_cn_2008263289_wy0a01_s_2_light"
+        "script.poly_home_all_on"
       ]
     }
   ]

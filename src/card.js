@@ -275,7 +275,8 @@ class PolyHome3D extends HTMLElement {
       el.className = "scene";
       el.innerHTML = iconMarkup(scene.icon || "mdi:palette", 15) + "<span></span>";
       el.querySelector("span").textContent = scene.name;
-      el.addEventListener("click", () => this._runScene(scene));
+      el.title = scene.description || scene.name;
+      el.addEventListener("click", () => this._runScene(scene, el));
       box.appendChild(el);
     }
     const devices = document.createElement("button");
@@ -424,7 +425,7 @@ class PolyHome3D extends HTMLElement {
     const state = this._hass.states[entity];
     if (!state) return "实体不存在";
     const labels = { on: "开启", off: "关闭", unavailable: "离线", unknown: "状态未知",
-      docked: "已回充", idle: "待机", cleaning: "清扫中", returning: "回充中", paused: "已暂停",
+      open: "已打开", closed: "已关闭", opening: "打开中", closing: "关闭中", docked: "已回充", idle: "待机", cleaning: "清扫中", returning: "回充中", paused: "已暂停",
       cool: "制冷", heat: "制热", auto: "自动", dry: "除湿", fan_only: "送风", playing: "播放中" };
     return labels[state.state] || state.state + (state.attributes.unit_of_measurement || "");
   }
@@ -1130,13 +1131,26 @@ class PolyHome3D extends HTMLElement {
     }));
   }
 
-  _runScene(scene) {
-    if (!this._hass) return;
+  async _runScene(scene, button) {
+    if (!this._hass || button?.getAttribute("aria-busy") === "true") return;
+    const label = button?.querySelector("span");
     const targets = (scene.targets || []).filter((id) => this._available(id));
-    if (scene.targets?.length && !targets.length) return;
+    if (scene.targets?.length && !targets.length) {
+      if (label) label.textContent = scene.name + " · 不可用";
+      return;
+    }
+    button?.setAttribute("aria-busy", "true");
+    if (label) label.textContent = scene.name + " · 发送中";
     const data = targets.length ? { entity_id: targets } : {};
     const parts = String(scene.service || "light.toggle").split(".");
-    this._hass.callService(parts[0], parts[1], data);
+    try {
+      await this._hass.callService(parts[0], parts[1], data);
+      if (label) label.textContent = scene.name + " · 已发送";
+    } catch (error) {
+      if (label) label.textContent = scene.name + " · 失败";
+    } finally {
+      button?.removeAttribute("aria-busy");
+    }
   }
 }
 

@@ -138,5 +138,41 @@
   "select.miir_cn_ir_2077736360269467649_ir02_ir_mode_p_2_1": [
     "unavailable",
     "运行模式"
+  ],
+  "cover.dooya_cn_2183387577_dt98_s_2_curtain": [
+    "closed",
+    "cover.dooya_cn_2183387577_dt98_s_2_curtain"
+  ],
+  "cover.dooya_cn_2183429288_dt98_s_2_curtain": [
+    "closed",
+    "cover.dooya_cn_2183429288_dt98_s_2_curtain"
+  ],
+  "script.poly_home_arrive": [
+    "off",
+    "回家"
+  ],
+  "script.poly_home_leave": [
+    "off",
+    "离家"
+  ],
+  "script.poly_home_cinema": [
+    "off",
+    "观影"
+  ],
+  "script.poly_home_dining": [
+    "off",
+    "就餐"
+  ],
+  "script.poly_home_reading": [
+    "off",
+    "阅读"
+  ],
+  "script.poly_home_sleep": [
+    "off",
+    "睡眠"
+  ],
+  "script.poly_home_all_on": [
+    "off",
+    "全开"
   ]
 }
