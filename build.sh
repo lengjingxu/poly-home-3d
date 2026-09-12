@@ -5,6 +5,7 @@ cd "$(dirname "$0")"
 
 [ -d node_modules ] || npm ci
 
+python3 -m unittest discover -s tests -v
 python3 model/build_model.py
 ./node_modules/.bin/esbuild src/index.js --bundle --format=esm --minify \
   --loader:.css=text --outfile=dist/poly-home-3d.js

@@ -88,6 +88,8 @@ open http://127.0.0.1:8899/preview.html
 W=1240 H=700 node shoot.mjs 'http://127.0.0.1:8899/preview.html?lights=all' /tmp/shot.png 9000
 ```
 
+高分屏截图可加 `DPR=2`。构建前自动检查地板面朝向和房间地板重叠；`node tests/render.mjs` 会启动临时预览，检查 2 倍像素比、HA 侧栏布局、重复加载、离开/返回页面和缩放时的相机状态。
+
 ## 许可
 
 MIT
