@@ -9,6 +9,7 @@ const url = process.argv[2];
 const outPath = process.argv[3] || '/tmp/shot.png';
 const waitMs = Number(process.argv[4] || 8000);
 const evalExpr = process.argv[5] || '';
+let exitCode = 0;
 
 const chrome = spawn(CHROME, [
   '--headless=new', '--disable-gpu', '--enable-unsafe-swiftshader',
@@ -72,17 +73,18 @@ try {
   if (evalExpr) {
     const r = await send('Runtime.evaluate', { expression: evalExpr, returnByValue: true, awaitPromise: true });
     console.log('EVAL:', JSON.stringify(r.result?.result?.value ?? r.result?.exceptionDetails ?? null));
+    if (r.result?.exceptionDetails) exitCode = 1;
   }
 
   const shot = await send('Page.captureScreenshot', { format: 'png' });
   fs.writeFileSync(outPath, Buffer.from(shot.result.data, 'base64'));
   console.log('shot bytes:', fs.statSync(outPath).size);
 } catch (err) {
+  exitCode = 1;
   console.log('RUNNER ERROR:', err.message);
 } finally {
   console.log('--- logs (' + logs.length + ') ---');
   for (const line of logs.slice(0, 40)) console.log(line.slice(0, 400));
   chrome.kill('SIGKILL');
-  process.exit(0);
+  process.exit(exitCode);
 }
-
