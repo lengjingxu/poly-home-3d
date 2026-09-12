@@ -66,6 +66,7 @@ class PolyHome3D extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this._config = { ...DEFAULTS };
     this._markerEls = new Map();
+    this._deviceEls = new Map();
     this._roomEls = new Map();
     this._roomMeshes = new Map();
     this._fixtures = new Map();
@@ -185,6 +186,7 @@ class PolyHome3D extends HTMLElement {
     this._roomMeshes.clear();
     this._roomEls.clear();
     this._fixtures.clear();
+    this._deviceEls.clear();
   }
 
   // ---------- DOM ----------
@@ -202,6 +204,9 @@ class PolyHome3D extends HTMLElement {
       + '<div class="rail"></div><div class="scenes"></div>'
       + '<div class="hint">拖动旋转 · 滚轮缩放 · 点房间开灯 · 长按查看详情</div>'
       + "</div>"
+      + '<dialog class="device-panel"><header><h2>设备</h2><select class="device-source" aria-label="设备来源"></select>'
+      + '<button class="device-close" type="button">关闭</button></header>'
+      + '<div class="device-list"></div></dialog>'
       + '<div class="loading">正在加载 3D 模型…</div></div></ha-card>';
 
     this.shadowRoot.querySelector(".brand h1").textContent = cfg.title;
@@ -210,6 +215,7 @@ class PolyHome3D extends HTMLElement {
     this._buildRail();
     this._buildScenes();
     this._buildMarkers();
+    this._buildDevices();
     this._setupThree();
     this._loadModel();
   }
@@ -271,6 +277,90 @@ class PolyHome3D extends HTMLElement {
       el.addEventListener("click", () => this._runScene(scene));
       box.appendChild(el);
     }
+    const devices = document.createElement("button");
+    devices.type = "button";
+    devices.className = "scene device-open";
+    devices.textContent = "设备 " + this._config.markers.length;
+    devices.addEventListener("click", () => this.shadowRoot.querySelector(".device-panel").showModal());
+    box.appendChild(devices);
+  }
+
+  _buildDevices() {
+    const panel = this.shadowRoot.querySelector(".device-panel");
+    panel.querySelector(".device-close").addEventListener("click", () => panel.close());
+    const list = panel.querySelector(".device-list");
+    const source = panel.querySelector(".device-source");
+    const markers = this._config.markers;
+    for (const name of ["", ...new Set(markers.map(m => m.source).filter(Boolean))]) {
+      const option = document.createElement("option");
+      option.value = name;
+      option.textContent = (name || "全部") + " " + markers.filter(m => !name || m.source === name).length;
+      source.appendChild(option);
+    }
+    source.addEventListener("change", () => {
+      for (const marker of markers) this._deviceEls.get(marker.entity).row.hidden = !!source.value && marker.source !== source.value;
+    });
+    this._deviceEls.clear();
+    for (const marker of this._config.markers) {
+      const row = document.createElement("div");
+      row.className = "device-row";
+      row.innerHTML = '<button type="button" class="device-info"><strong></strong><small></small></button>'
+        + '<span class="device-state"></span>';
+      row.querySelector("strong").textContent = marker.name;
+      row.querySelector("small").textContent = [marker.source, marker.room || "未标房间"].filter(Boolean).join(" · ");
+      row.querySelector(".device-info").addEventListener("click", () => {
+        panel.close();
+        this._moreInfo(marker.entity);
+      });
+      let toggle = null;
+      if (marker.entity.startsWith("light.")) {
+        toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "device-toggle";
+        toggle.setAttribute("aria-label", marker.name + "开关");
+        toggle.addEventListener("click", () => this._activate(marker));
+        row.appendChild(toggle);
+      }
+      if (marker.controls) {
+        const controls = document.createElement("div");
+        controls.className = "device-controls";
+        for (const control of marker.controls) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = control.name;
+          button.addEventListener("click", () => { panel.close(); this._moreInfo(control.entity); });
+          controls.appendChild(button);
+        }
+        row.appendChild(controls);
+      }
+      list.appendChild(row);
+      this._deviceEls.set(marker.entity, { row, state: row.querySelector(".device-state"), toggle });
+    }
+  }
+
+  _available(entity) {
+    const state = this._hass?.states[entity];
+    return !!state && state.state !== "unavailable" && state.state !== "unknown";
+  }
+
+  _stateText(entity) {
+    const state = this._hass.states[entity];
+    if (!state) return "实体不存在";
+    const labels = { on: "开启", off: "关闭", unavailable: "离线", unknown: "状态未知",
+      docked: "已回充", idle: "待机", cleaning: "清扫中", returning: "回充中", paused: "已暂停",
+      cool: "制冷", heat: "制热", auto: "自动", dry: "除湿", fan_only: "送风", playing: "播放中" };
+    return labels[state.state] || state.state + (state.attributes.unit_of_measurement || "");
+  }
+
+  _paintDevices() {
+    for (const [entity, item] of this._deviceEls) {
+      item.state.textContent = this._stateText(entity);
+      item.row.classList.toggle("unavailable", !this._available(entity));
+      if (item.toggle) {
+        item.toggle.disabled = !this._available(entity);
+        item.toggle.textContent = this._hass.states[entity]?.state === "on" ? "关灯" : "开灯";
+      }
+    }
   }
 
   _buildMarkers() {
@@ -278,6 +368,7 @@ class PolyHome3D extends HTMLElement {
     box.innerHTML = "";
     this._markerEls.clear();
     for (const marker of this._config.markers || []) {
+      if (![marker.x, marker.y, marker.z].every(Number.isFinite)) continue;
       const el = document.createElement("div");
       el.className = "marker";
       el.innerHTML = '<div class="dot">' + iconMarkup(marker.icon || "mdi:lightbulb", 14) + "</div>"
@@ -714,6 +805,7 @@ class PolyHome3D extends HTMLElement {
     const cfg = this._config;
     const discGeo = new THREE.CylinderGeometry(0.085, 0.085, 0.03, 20);
     for (const marker of cfg.markers || []) {
+      if (!marker.entity.startsWith("light.") || ![marker.x, marker.y, marker.z].every(Number.isFinite)) continue;
       const color = new THREE.Color(cfg.accent);
       const disc = new THREE.Mesh(discGeo, new THREE.MeshStandardMaterial({
         color: 0x2b2f36, emissive: color, emissiveIntensity: 0, roughness: 0.32, metalness: 0.1,
@@ -775,7 +867,7 @@ class PolyHome3D extends HTMLElement {
     this._bloom.strength = sunUp ? cfg.bloom * 0.75 : cfg.bloom;
     const lightIds = (this._config.markers || [])
       .map((m) => m.entity)
-      .filter((id) => /^(light|switch)\./.test(id));
+      .filter((id) => id.startsWith("light."));
     let litCount = 0;
     for (const id of lightIds) if (st(id) === "on") litCount += 1;
     const litRatio = lightIds.length ? litCount / lightIds.length : 0;
@@ -802,11 +894,17 @@ class PolyHome3D extends HTMLElement {
         fx.light.dispose();
         fx.light = null;
       }
+    }
+
+    for (const marker of cfg.markers) {
+      const entityId = marker.entity;
       const el = this._markerEls.get(entityId);
       if (el) {
         const state = this._hass.states[entityId];
-        el.classList.toggle("on", on);
-        el.classList.toggle("off2", !state || state.state === "unavailable");
+        const active = ["on", "cool", "heat", "dry", "fan_only", "auto", "heat_cool", "playing", "cleaning", "returning"];
+        el.classList.toggle("on", this._available(entityId) && active.includes(state.state));
+        el.classList.toggle("off2", !this._available(entityId));
+        el.querySelector(".tag").textContent = marker.name + " · " + this._stateText(entityId);
       }
     }
 
@@ -822,6 +920,7 @@ class PolyHome3D extends HTMLElement {
     this._paintRail();
     this._paintChips(sunUp, litCount);
     this._paintClock();
+    this._paintDevices();
   }
 
   _paintClock() {
@@ -836,7 +935,7 @@ class PolyHome3D extends HTMLElement {
 
   _paintChips(sunUp, litCount) {
     const box = this.shadowRoot.querySelector(".chips");
-    const total = (this._config.markers || []).filter((m) => /^(light|switch)\./.test(m.entity)).length;
+    const total = (this._config.markers || []).filter((m) => m.entity.startsWith("light.")).length;
     const temps = [];
     for (const marker of this._config.markers || []) {
       const state = this._hass.states[marker.entity];
@@ -927,12 +1026,18 @@ class PolyHome3D extends HTMLElement {
 
   _toggleRoom(room) {
     if (!this._hass || !(room.lights || []).length) return;
-    const allOff = room.lights.every((id) => (this._hass.states[id] || {}).state !== "on");
-    this._hass.callService("light", allOff ? "turn_on" : "turn_off", { entity_id: room.lights });
+    const lights = room.lights.filter((id) => id.startsWith("light.") && this._available(id));
+    if (!lights.length) return;
+    const allOff = lights.every((id) => this._hass.states[id].state !== "on");
+    this._hass.callService("light", allOff ? "turn_on" : "turn_off", { entity_id: lights });
   }
 
   _activate(marker) {
     if (!this._hass) return;
+    if (marker.tap_action === "more-info" || !this._available(marker.entity)) {
+      this._moreInfo(marker.entity);
+      return;
+    }
     const domain = marker.entity.split(".")[0];
     if (domain === "light" || domain === "switch" || domain === "fan" || domain === "input_boolean") {
       this._hass.callService(domain, "toggle", { entity_id: marker.entity });
@@ -949,7 +1054,8 @@ class PolyHome3D extends HTMLElement {
 
   _runScene(scene) {
     if (!this._hass) return;
-    const targets = scene.targets || [];
+    const targets = (scene.targets || []).filter((id) => this._available(id));
+    if (scene.targets?.length && !targets.length) return;
     const data = targets.length ? { entity_id: targets } : {};
     const parts = String(scene.service || "light.toggle").split(".");
     this._hass.callService(parts[0], parts[1], data);

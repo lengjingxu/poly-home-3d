@@ -74,6 +74,27 @@ ha-card { height: 100%; display: block; background: transparent; border: none; b
   transition: background 0.18s, border-color 0.18s, color 0.18s; }
 .scene:hover { background: rgba(255,176,102,0.16); border-color: rgba(255,176,102,0.38); color: #fff3e4; }
 .scene svg { display: block; }
+.device-panel { width: min(460px, calc(100vw - 28px)); max-height: calc(100dvh - 56px);
+  padding: 18px; border: 1px solid #ffffff24; border-radius: 16px; background: #15181e; color: #f6ece0;
+  font: inherit; box-shadow: 0 20px 80px #0009; }
+.device-panel::backdrop { background: #0008; }
+.device-panel header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding-bottom: 10px;
+  position: sticky; top: 0; z-index: 1; background: #15181e; }
+.device-panel h2 { margin: 0; flex: 1; font-size: 17px; }
+.device-source { color: inherit; background: #15181e; border: 1px solid #ffffff24; border-radius: 8px; padding: 6px; }
+.device-panel button { font: inherit; color: inherit; cursor: pointer; }
+.device-close, .device-toggle, .device-controls button { border: 1px solid #ffffff24; border-radius: 8px;
+  background: #ffffff08; padding: 6px 10px; font-size: 12px !important; }
+.device-list { display: flex; flex-direction: column; }
+.device-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 10px 0; border-top: 1px solid #ffffff10; }
+.device-row[hidden] { display: none; }
+.device-info { flex: 1; min-width: 0; border: 0; background: none; text-align: left; padding: 4px 0; }
+.device-info strong { display: block; font-size: 13px; font-weight: 500; }
+.device-info small { display: block; font-size: 11px; color: #b7b0a5; margin-top: 4px; }
+.device-state { font-size: 12px; color: #ffca99; }
+.device-row.unavailable .device-state { color: #a8a29b; }
+.device-toggle:disabled { opacity: .35; cursor: not-allowed; }
+.device-controls { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
 .hint { position: absolute; right: 22px; bottom: 24px; font-size: 10.5px; letter-spacing: 0.08em;
   color: rgba(246,236,224,0.24); }
 .loading { position: absolute; inset: 0; display: grid; place-items: center;

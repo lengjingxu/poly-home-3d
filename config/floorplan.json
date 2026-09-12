@@ -9,54 +9,108 @@
   "rooms": [
     {
       "name": "客餐厨",
-      "rect": [5.9, 0, 12.5, 10.2],
+      "rect": [
+        5.9,
+        0,
+        12.5,
+        10.2
+      ],
       "lights": [
         "light.ke_ting_zhu_deng",
         "light.ke_ting_she_deng",
         "light.ke_ting_deng_dai",
         "light.can_ting_zhu_deng",
-        "light.chu_fang_zhu_deng"
+        "light.chu_fang_zhu_deng",
+        "light.gdds_cn_2142937389_wy0a02_s_2_light",
+        "light.gdds_cn_2142937411_wy0a02_s_2_light"
       ]
     },
     {
       "name": "衣帽间",
-      "rect": [1.6, 1.15, 5.8, 4],
+      "rect": [
+        1.6,
+        1.15,
+        5.8,
+        4
+      ],
       "lights": []
     },
     {
       "name": "主卫",
-      "rect": [0.1, 1.15, 1.55, 4],
+      "rect": [
+        0.1,
+        1.15,
+        1.55,
+        4
+      ],
       "lights": []
     },
     {
       "name": "卫生间",
-      "rect": [5.95, 1.15, 8.05, 3.65],
+      "rect": [
+        5.95,
+        1.15,
+        8.05,
+        3.65
+      ],
       "lights": []
     },
     {
       "name": "主卧",
-      "rect": [0.1, 4.05, 3.4, 9.6],
-      "lights": []
+      "rect": [
+        0.1,
+        4.05,
+        3.4,
+        9.6
+      ],
+      "lights": [
+        "light.gdds_cn_2143042180_wy0a02_s_2_light",
+        "light.gdds_cn_2143044426_wy0a02_s_2_light"
+      ]
     },
     {
       "name": "次卧",
-      "rect": [3.45, 4.05, 6.25, 9.6],
+      "rect": [
+        3.45,
+        4.05,
+        6.25,
+        9.6
+      ],
       "lights": []
     },
     {
       "name": "走廊",
-      "rect": [5.75, 3.65, 8.05, 4.65],
-      "lights": ["light.zou_lang_she_deng_kai_guan"]
+      "rect": [
+        5.75,
+        3.65,
+        8.05,
+        4.65
+      ],
+      "lights": [
+        "light.zou_lang_she_deng_kai_guan"
+      ]
     },
     {
       "name": "阳台",
-      "rect": [8.55, 10.2, 12.45, 11.15],
+      "rect": [
+        8.55,
+        10.2,
+        12.45,
+        11.15
+      ],
       "lights": []
     },
     {
       "name": "玄关",
-      "rect": [10.8, 0, 12.45, 2.1],
-      "lights": ["light.xuan_guan_she_deng"]
+      "rect": [
+        10.8,
+        0,
+        12.45,
+        2.1
+      ],
+      "lights": [
+        "light.xuan_guan_she_deng"
+      ]
     }
   ],
   "markers": [
@@ -66,7 +120,9 @@
       "icon": "mdi:ceiling-light",
       "x": 10.1,
       "y": 1.15,
-      "z": 7.2
+      "z": 7.2,
+      "source": "保利",
+      "room": "客餐厨"
     },
     {
       "entity": "light.ke_ting_she_deng",
@@ -75,7 +131,9 @@
       "icon": "mdi:spotlight-beam",
       "x": 9.1,
       "y": 1.15,
-      "z": 6.1
+      "z": 6.1,
+      "source": "保利",
+      "room": "客餐厨"
     },
     {
       "entity": "light.ke_ting_deng_dai",
@@ -83,7 +141,9 @@
       "icon": "mdi:led-strip-variant",
       "x": 10.2,
       "y": 1.05,
-      "z": 8.5
+      "z": 8.5,
+      "source": "保利",
+      "room": "客餐厨"
     },
     {
       "entity": "light.can_ting_zhu_deng",
@@ -91,7 +151,9 @@
       "icon": "mdi:ceiling-light",
       "x": 9.05,
       "y": 1.15,
-      "z": 4.35
+      "z": 4.35,
+      "source": "保利",
+      "room": "客餐厨"
     },
     {
       "entity": "light.chu_fang_zhu_deng",
@@ -99,7 +161,9 @@
       "icon": "mdi:ceiling-light",
       "x": 10.1,
       "y": 1.15,
-      "z": 1.5
+      "z": 1.5,
+      "source": "保利",
+      "room": "客餐厨"
     },
     {
       "entity": "light.xuan_guan_she_deng",
@@ -108,7 +172,9 @@
       "icon": "mdi:spotlight-beam",
       "x": 11.4,
       "y": 1.15,
-      "z": 1.0
+      "z": 1.0,
+      "source": "保利",
+      "room": "玄关"
     },
     {
       "entity": "light.zou_lang_she_deng_kai_guan",
@@ -117,7 +183,9 @@
       "icon": "mdi:spotlight-beam",
       "x": 6.8,
       "y": 1.15,
-      "z": 4.25
+      "z": 4.25,
+      "source": "保利",
+      "room": "走廊"
     },
     {
       "entity": "climate.ke_ting_kong_diao",
@@ -125,7 +193,9 @@
       "icon": "mdi:air-conditioner",
       "x": 11.8,
       "y": 1,
-      "z": 7.2
+      "z": 7.2,
+      "source": "保利",
+      "room": "客餐厨"
     },
     {
       "entity": "climate.zhu_wo_kong_diao",
@@ -133,7 +203,9 @@
       "icon": "mdi:air-conditioner",
       "x": 2.6,
       "y": 1,
-      "z": 5.1
+      "z": 5.1,
+      "source": "保利",
+      "room": "主卧"
     },
     {
       "entity": "climate.ci_wo_yi_kong_diao",
@@ -141,7 +213,9 @@
       "icon": "mdi:air-conditioner",
       "x": 5.6,
       "y": 1,
-      "z": 5.1
+      "z": 5.1,
+      "source": "保利",
+      "room": "次卧"
     },
     {
       "entity": "fan.mai_di_long_xin_feng_chrv_1525b_qr_d_fhd",
@@ -149,7 +223,9 @@
       "icon": "mdi:fan",
       "x": 12.0,
       "y": 1,
-      "z": 3.2
+      "z": 3.2,
+      "source": "保利",
+      "room": "客餐厨"
     },
     {
       "entity": "binary_sensor.zhi_neng_men_chuang_ci",
@@ -157,7 +233,184 @@
       "icon": "mdi:door-closed",
       "x": 12.25,
       "y": 1.05,
-      "z": 1.45
+      "z": 1.45,
+      "source": "保利",
+      "room": "玄关"
+    },
+    {
+      "entity": "light.gdds_cn_2142937389_wy0a02_s_2_light",
+      "name": "米家主灯底盘",
+      "source": "小米",
+      "icon": "mdi:ceiling-light",
+      "room": "客餐厨",
+      "x": 10.7,
+      "y": 1.15,
+      "z": 7.3
+    },
+    {
+      "entity": "light.gdds_cn_2142937411_wy0a02_s_2_light",
+      "name": "米家主灯射灯",
+      "source": "小米",
+      "icon": "mdi:spotlight-beam",
+      "room": "客餐厨",
+      "x": 9.7,
+      "y": 1.15,
+      "z": 5.9,
+      "cone": true
+    },
+    {
+      "entity": "light.gdds_cn_2143042180_wy0a02_s_2_light",
+      "name": "米家卧室射灯",
+      "source": "小米",
+      "icon": "mdi:spotlight-beam",
+      "room": "主卧",
+      "x": 1.4,
+      "y": 1.15,
+      "z": 6.0,
+      "cone": true
+    },
+    {
+      "entity": "light.gdds_cn_2143044426_wy0a02_s_2_light",
+      "name": "米家卧室底灯",
+      "source": "小米",
+      "icon": "mdi:ceiling-light",
+      "room": "主卧",
+      "x": 2.5,
+      "y": 1.15,
+      "z": 7.4
+    },
+    {
+      "entity": "light.comely_cn_2008156648_wy0a01_s_2_light",
+      "name": "新特丽照明 A",
+      "source": "小米",
+      "icon": "mdi:ceiling-light"
+    },
+    {
+      "entity": "light.comely_cn_2008263289_wy0a01_s_2_light",
+      "name": "新特丽照明 B",
+      "source": "小米",
+      "icon": "mdi:ceiling-light"
+    },
+    {
+      "entity": "climate.759413_cn_x_2903_3819083_0113a8a41b3de3e4_c_5_13_iez",
+      "name": "米家客厅空调",
+      "source": "小米",
+      "icon": "mdi:air-conditioner",
+      "room": "客餐厨",
+      "x": 11.8,
+      "y": 1,
+      "z": 8.65
+    },
+    {
+      "entity": "climate.759413_cn_x_2903_3819083_011306a20d3de3e4_c_5_13_iez",
+      "name": "米家客厅 X 空间空调",
+      "source": "小米",
+      "icon": "mdi:air-conditioner",
+      "room": "客餐厨",
+      "x": 7.9,
+      "y": 1,
+      "z": 5.4
+    },
+    {
+      "entity": "climate.759413_cn_x_2903_3819083_0113649d193de3e4_c_5_13_iez",
+      "name": "米家衣帽间空调",
+      "source": "小米",
+      "icon": "mdi:air-conditioner",
+      "room": "衣帽间",
+      "x": 4.2,
+      "y": 1,
+      "z": 2.8
+    },
+    {
+      "entity": "climate.759413_cn_x_2903_3819083_0113ba640d3de3e4_c_5_13_iez",
+      "name": "米家主卧空调",
+      "source": "小米",
+      "icon": "mdi:air-conditioner",
+      "room": "主卧",
+      "x": 0.65,
+      "y": 1,
+      "z": 4.9
+    },
+    {
+      "entity": "climate.759413_cn_x_2903_3819083_01133a780d3de3e4_c_5_13_iez",
+      "name": "米家次卧空调",
+      "source": "小米",
+      "icon": "mdi:air-conditioner",
+      "room": "次卧",
+      "x": 4.2,
+      "y": 1,
+      "z": 5.0
+    },
+    {
+      "entity": "vacuum.dreame_cn_1033533553_p2114o",
+      "name": "米家扫拖机器人",
+      "source": "小米",
+      "icon": "mdi:robot-vacuum",
+      "room": "客餐厨",
+      "x": 8.4,
+      "y": 0.2,
+      "z": 9.5
+    },
+    {
+      "entity": "media_player.xiaomi_cn_566594732_lx06",
+      "name": "小爱音箱 Pro",
+      "source": "小米",
+      "icon": "mdi:speaker",
+      "room": "客餐厨",
+      "x": 8.0,
+      "y": 0.7,
+      "z": 7.8
+    },
+    {
+      "entity": "switch.chuangmi_cn_1175471218_079ac1_on_p_2_1",
+      "name": "南翔摄像头",
+      "source": "小米",
+      "icon": "mdi:video",
+      "room": "客餐厨",
+      "x": 12.0,
+      "y": 1.15,
+      "z": 5.15,
+      "tap_action": "more-info"
+    },
+    {
+      "entity": "number.miir_cn_ir_2077736360269467649_ir02_ir_temperature_p_2_2",
+      "name": "米家红外空调控制器",
+      "source": "小米",
+      "icon": "mdi:remote",
+      "room": "客餐厨",
+      "x": 11.3,
+      "y": 0.7,
+      "z": 3.6,
+      "controls": [
+        {
+          "entity": "button.miir_cn_ir_2077736360269467649_ir02_turn_on_a_2_6",
+          "name": "开机"
+        },
+        {
+          "entity": "button.miir_cn_ir_2077736360269467649_ir02_turn_off_a_2_5",
+          "name": "关机"
+        },
+        {
+          "entity": "button.miir_cn_ir_2077736360269467649_ir02_temperature_up_a_2_4",
+          "name": "升温"
+        },
+        {
+          "entity": "button.miir_cn_ir_2077736360269467649_ir02_temperature_down_a_2_3",
+          "name": "降温"
+        },
+        {
+          "entity": "button.miir_cn_ir_2077736360269467649_ir02_fan_speed_up_a_2_2",
+          "name": "增大风速"
+        },
+        {
+          "entity": "button.miir_cn_ir_2077736360269467649_ir02_fan_speed_down_a_2_1",
+          "name": "减小风速"
+        },
+        {
+          "entity": "select.miir_cn_ir_2077736360269467649_ir02_ir_mode_p_2_1",
+          "name": "运行模式"
+        }
+      ]
     }
   ],
   "scenes": [
@@ -168,7 +421,8 @@
       "targets": [
         "light.xuan_guan_she_deng",
         "light.ke_ting_zhu_deng",
-        "light.can_ting_zhu_deng"
+        "light.can_ting_zhu_deng",
+        "light.gdds_cn_2142937389_wy0a02_s_2_light"
       ]
     },
     {
@@ -182,14 +436,22 @@
         "light.can_ting_zhu_deng",
         "light.chu_fang_zhu_deng",
         "light.xuan_guan_she_deng",
-        "light.zou_lang_she_deng_kai_guan"
+        "light.zou_lang_she_deng_kai_guan",
+        "light.gdds_cn_2142937389_wy0a02_s_2_light",
+        "light.gdds_cn_2142937411_wy0a02_s_2_light",
+        "light.gdds_cn_2143042180_wy0a02_s_2_light",
+        "light.gdds_cn_2143044426_wy0a02_s_2_light",
+        "light.comely_cn_2008156648_wy0a01_s_2_light",
+        "light.comely_cn_2008263289_wy0a01_s_2_light"
       ]
     },
     {
       "name": "观影",
       "icon": "mdi:sofa",
       "service": "light.turn_on",
-      "targets": ["light.ke_ting_deng_dai"]
+      "targets": [
+        "light.ke_ting_deng_dai"
+      ]
     },
     {
       "name": "全开",
@@ -202,7 +464,13 @@
         "light.can_ting_zhu_deng",
         "light.chu_fang_zhu_deng",
         "light.xuan_guan_she_deng",
-        "light.zou_lang_she_deng_kai_guan"
+        "light.zou_lang_she_deng_kai_guan",
+        "light.gdds_cn_2142937389_wy0a02_s_2_light",
+        "light.gdds_cn_2142937411_wy0a02_s_2_light",
+        "light.gdds_cn_2143042180_wy0a02_s_2_light",
+        "light.gdds_cn_2143044426_wy0a02_s_2_light",
+        "light.comely_cn_2008156648_wy0a01_s_2_light",
+        "light.comely_cn_2008263289_wy0a01_s_2_light"
       ]
     }
   ]

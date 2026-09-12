@@ -13,8 +13,8 @@ try {
     await new Promise(resolve => setTimeout(resolve, 50));
   }
   const result = spawnSync(process.execPath, ['shoot.mjs', url, '/tmp/poly-render-test.png', '2000',
-    readFileSync('tests/render-browser.js', 'utf8')], {
-    env: { ...process.env, W: '1568', H: '878', DPR: '2', CDP_PORT: String(port + 1000) },
+    readFileSync(process.argv[2] || 'tests/render-browser.js', 'utf8')], {
+    env: { ...process.env, W: process.env.W || '1568', H: process.env.H || '878', DPR: '2', CDP_PORT: String(port + 1000) },
     stdio: 'inherit',
   });
   process.exitCode = result.status ?? 1;

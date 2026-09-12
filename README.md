@@ -14,6 +14,7 @@ Home Assistant 的 3D 户型中控卡片。用 three.js 实时渲染一栋房子
 - 自动识别 HA 侧栏布局和全屏布局，按整窗视觉中心取景并避让房间导航。
 - 当前示例按飞书户型图的 `12500 × 11200 mm` 主尺寸重建为两室大客餐厨，附带衣帽间、双卫、阳台和开放书房。
 - 图标内联在 `src/icons.js`，不依赖 `ha-icon`。
+- 示例配置包含保利设备及 15 台已接入 HA 的小米设备。底部“设备”可查看完整列表；未设置坐标的设备只在列表中显示，离线灯具禁用开关。
 
 ## 安装
 
@@ -58,6 +59,9 @@ config_url: /hacsfiles/poly-home-3d/floorplan.json
 | `rooms[].rect` | `[x0, z0, x1, z1]`，单位米，与模型同一坐标系 |
 | `rooms[].lights` | 该房间的灯实体，用于亮灯指示和单房间总开关 |
 | `markers[]` | `entity` / `name` / `icon`（mdi 名）/ `x` `y` `z`；灯加 `"cone": true` 出光锥 |
+| `markers[].source` / `room` | 设备列表显示的来源和房间名称 |
+| `markers[].tap_action` | `more-info` 表示点击打开 HA 详情；默认灯、开关和风扇切换开关，其他类型打开详情 |
+| `markers[].controls` | 可选的 `[{entity, name}]` 附加控制入口，点击打开对应 HA 实体详情，例如红外空调的模式、温度和开关 |
 | `scenes[]` | `name` / `icon` / `service` / `targets[]`，底部按钮 |
 
 ## 换模型
@@ -75,6 +79,8 @@ open http://127.0.0.1:8899/preview.html
 
 构建时会按 glb 内容生成模型 URL 的版本参数，HA 更新模型后不会继续使用旧浏览器缓存。
 
+`markers` 支持 HA 实体，不限定集成品牌。只有 `light.*` 生成灯光和计入亮灯数量；音箱、摄像头和空调不会生成光池。房间和场景控制会跳过离线、未知或不存在的实体；全部目标不可用时不发送服务调用。设备详情仍可打开查看故障状态。省略全部 `x/y/z` 时，该设备仅显示在列表中。
+
 `preview.html` 用 `config/states.json` 当假状态，查询参数可以换环境：
 
 - `sun=below_horizon|above_horizon` 夜或昼
@@ -89,6 +95,8 @@ W=1240 H=700 node shoot.mjs 'http://127.0.0.1:8899/preview.html?lights=all' /tmp
 ```
 
 高分屏截图可加 `DPR=2`。构建前自动检查地板面朝向和房间地板重叠；`node tests/render.mjs` 会启动临时预览，检查 2 倍像素比、HA 侧栏布局、重复加载、离开/返回页面和缩放时的相机状态。
+
+设备控制测试：`node tests/render.mjs tests/devices-browser.js`。使用本地模拟状态检查主控入口、离线处理和服务目标，不操作真实设备。手机列表检查可加 `W=390 H=844`。
 
 ## 许可
 
