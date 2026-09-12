@@ -50,5 +50,93 @@
   "sun.sun": [
     "above_horizon",
     "Sun"
+  ],
+  "light.gdds_cn_2142937389_wy0a02_s_2_light": [
+    "off",
+    "米家主灯底盘"
+  ],
+  "light.gdds_cn_2142937411_wy0a02_s_2_light": [
+    "unavailable",
+    "米家主灯射灯"
+  ],
+  "light.gdds_cn_2143042180_wy0a02_s_2_light": [
+    "unavailable",
+    "米家卧室射灯"
+  ],
+  "light.gdds_cn_2143044426_wy0a02_s_2_light": [
+    "unavailable",
+    "米家卧室底灯"
+  ],
+  "light.comely_cn_2008156648_wy0a01_s_2_light": [
+    "unavailable",
+    "新特丽照明 A"
+  ],
+  "light.comely_cn_2008263289_wy0a01_s_2_light": [
+    "unavailable",
+    "新特丽照明 B"
+  ],
+  "climate.759413_cn_x_2903_3819083_0113a8a41b3de3e4_c_5_13_iez": [
+    "off",
+    "米家客厅空调"
+  ],
+  "climate.759413_cn_x_2903_3819083_011306a20d3de3e4_c_5_13_iez": [
+    "off",
+    "米家客厅 X 空间空调"
+  ],
+  "climate.759413_cn_x_2903_3819083_0113649d193de3e4_c_5_13_iez": [
+    "off",
+    "米家衣帽间空调"
+  ],
+  "climate.759413_cn_x_2903_3819083_0113ba640d3de3e4_c_5_13_iez": [
+    "off",
+    "米家主卧空调"
+  ],
+  "climate.759413_cn_x_2903_3819083_01133a780d3de3e4_c_5_13_iez": [
+    "off",
+    "米家次卧空调"
+  ],
+  "vacuum.dreame_cn_1033533553_p2114o": [
+    "docked",
+    "米家扫拖机器人"
+  ],
+  "media_player.xiaomi_cn_566594732_lx06": [
+    "idle",
+    "小爱音箱 Pro"
+  ],
+  "switch.chuangmi_cn_1175471218_079ac1_on_p_2_1": [
+    "on",
+    "南翔摄像头"
+  ],
+  "number.miir_cn_ir_2077736360269467649_ir02_ir_temperature_p_2_2": [
+    "unavailable",
+    "米家红外空调控制器"
+  ],
+  "button.miir_cn_ir_2077736360269467649_ir02_turn_on_a_2_6": [
+    "unavailable",
+    "开机"
+  ],
+  "button.miir_cn_ir_2077736360269467649_ir02_turn_off_a_2_5": [
+    "unavailable",
+    "关机"
+  ],
+  "button.miir_cn_ir_2077736360269467649_ir02_temperature_up_a_2_4": [
+    "unavailable",
+    "升温"
+  ],
+  "button.miir_cn_ir_2077736360269467649_ir02_temperature_down_a_2_3": [
+    "unavailable",
+    "降温"
+  ],
+  "button.miir_cn_ir_2077736360269467649_ir02_fan_speed_up_a_2_2": [
+    "unavailable",
+    "增大风速"
+  ],
+  "button.miir_cn_ir_2077736360269467649_ir02_fan_speed_down_a_2_1": [
+    "unavailable",
+    "减小风速"
+  ],
+  "select.miir_cn_ir_2077736360269467649_ir02_ir_mode_p_2_1": [
+    "unavailable",
+    "运行模式"
   ]
 }
