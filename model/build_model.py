@@ -285,6 +285,7 @@ INTERIOR_WALLS = [
     ((8.05, 0.05), (8.05, 3.65), []),
     ((6.25, 4.05), (6.25, 9.60), [(0.55, 1.35)]),
     ((3.45, 9.60), (6.25, 9.60), []),
+    ((8.55, 10.20), (12.45, 10.20), [(0.70, 3.20)]),
 ]
 
 WINDOWS = [
@@ -346,6 +347,7 @@ def build_door_frames(m: Model) -> None:
         (1.60, 0.95, math.pi / 2), (1.60, 1.75, math.pi / 2),
         (5.95, 0.95, math.pi / 2), (5.95, 1.75, math.pi / 2),
         (6.65, 3.65, 0), (7.45, 3.65, 0),
+        (9.25, 10.20, 0), (11.75, 10.20, 0),
     ]
     for x, z, rot in jambs:
         m.box("wood_light", x, WALL_H / 2, z, 0.07, WALL_H, WALL_T + 0.02, rot)
@@ -364,6 +366,8 @@ def build_doors(m: Model) -> None:
     ]
     for x, z, width, angle in leaves:
         m.box("wood_light", x, WALL_H / 2 - 0.02, z, width, WALL_H - 0.06, 0.04, rot_y=angle)
+    m.box("glass", 10.50, 0.58, 10.20, 2.20, 1.04, 0.03)
+    m.box("metal_dark", 10.50, 0.58, 10.18, 0.04, 1.12, 0.05)
 
 
 def bed(m: Model, x, z, w, l, rot=0.0) -> None:
