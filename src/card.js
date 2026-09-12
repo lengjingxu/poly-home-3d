@@ -74,6 +74,7 @@ class PolyHome3D extends HTMLElement {
     this._tmp = new THREE.Vector3();
     this._hass = null;
     this._rendering = false;
+    this._configRequest = 0;
     this._focus = "全屋";
     this._layout = { mode: "card", offsetX: 0, offsetY: 0 };
   }
@@ -87,6 +88,7 @@ class PolyHome3D extends HTMLElement {
   }
 
   setConfig(config) {
+    const request = ++this._configRequest;
     this._hass = null;
     this._focus = "全屋";
     if (config.config_url) {
@@ -95,8 +97,8 @@ class PolyHome3D extends HTMLElement {
           if (!res.ok) throw new Error(res.status + " " + res.statusText);
           return res.json();
         })
-        .then((file) => this._applyConfig(file, config))
-        .catch((err) => this._fail("配置加载失败：" + err.message));
+        .then((file) => { if (request === this._configRequest) this._applyConfig(file, config); })
+        .catch((err) => { if (request === this._configRequest) this._fail("配置加载失败：" + err.message); });
       return;
     }
     this._applyConfig({}, config);
@@ -111,6 +113,7 @@ class PolyHome3D extends HTMLElement {
   }
 
   _fail(message) {
+    this._disposeThree();
     this.shadowRoot.innerHTML = "<style>" + CSS + "</style>"
       + '<ha-card><div class="wrap"><div class="loading">' + message + "</div></div></ha-card>";
   }
@@ -122,6 +125,7 @@ class PolyHome3D extends HTMLElement {
 
   disconnectedCallback() {
     this._rendering = false;
+    this._renderer?.setAnimationLoop(null);
     if (this._ro) this._ro.disconnect();
     if (this._onWindowResize) window.removeEventListener("resize", this._onWindowResize);
     if (this._onViewportResize && window.visualViewport) {
@@ -129,9 +133,64 @@ class PolyHome3D extends HTMLElement {
     }
   }
 
+  connectedCallback() {
+    if (!this._renderer) return;
+    this._ro.observe(this.shadowRoot.querySelector(".viewport"));
+    window.addEventListener("resize", this._onWindowResize);
+    window.visualViewport?.addEventListener("resize", this._onViewportResize);
+    this._resize();
+    this._startRendering();
+  }
+
+  _startRendering() {
+    if (this._rendering || !this.isConnected) return;
+    this._rendering = true;
+    this._renderer.setAnimationLoop(() => {
+      this._tickCamera();
+      this._controls.update();
+      this._syncOverlays();
+      this._composer.render();
+    });
+  }
+
+  _disposeObject(root) {
+    const resources = new Set();
+    root?.traverse((child) => {
+      if (child.geometry) resources.add(child.geometry);
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
+      for (const material of materials) {
+        if (!material) continue;
+        resources.add(material);
+        for (const value of Object.values(material)) if (value?.isTexture) resources.add(value);
+      }
+      if (child.isLight) resources.add(child);
+    });
+    for (const resource of resources) resource.dispose();
+  }
+
+  _disposeThree() {
+    this.disconnectedCallback();
+    this._controls?.dispose();
+    this._disposeObject(this._scene);
+    this._environment?.dispose();
+    for (const pass of this._composer?.passes || []) pass.dispose();
+    this._composer?.dispose();
+    this._renderer?.dispose();
+    this._beamTex?.dispose();
+    this._glowTex?.dispose();
+    this._poolTex?.dispose();
+    this._scene = this._renderer = this._composer = this._controls = null;
+    this._environment = this._model = this._bounds = this._glass = this._anim = null;
+    this._skyDay = this._lastSize = null;
+    this._roomMeshes.clear();
+    this._roomEls.clear();
+    this._fixtures.clear();
+  }
+
   // ---------- DOM ----------
 
   _build() {
+    this._disposeThree();
     const cfg = this._config;
     this.shadowRoot.innerHTML = "<style>" + CSS + "</style>"
       + '<ha-card><div class="wrap" style="--poly-bg:' + cfg.background + ";--poly-accent:" + cfg.accent + '">'
@@ -261,7 +320,12 @@ class PolyHome3D extends HTMLElement {
     scene.add(sky);
     this._sky = sky;
     this._setSky(true);
-    scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+    const environment = new RoomEnvironment();
+    const generator = new THREE.PMREMGenerator(renderer);
+    this._environment = generator.fromScene(environment, 0.04);
+    scene.environment = this._environment.texture;
+    environment.dispose();
+    generator.dispose();
     scene.environmentIntensity = 0.3;
     this._scene = scene;
 
@@ -275,6 +339,7 @@ class PolyHome3D extends HTMLElement {
     controls.minDistance = 2.2;
     controls.maxDistance = 46;
     controls.enablePan = false;
+    controls.addEventListener("start", () => { this._anim = null; });
     this._controls = controls;
 
     this._hemi = new THREE.HemisphereLight(0x93a7c9, 0x241d18, 0.42);
@@ -322,23 +387,10 @@ class PolyHome3D extends HTMLElement {
     this._composer.addPass(new OutputPass());
 
     this._ro = new ResizeObserver(() => this._resize());
-    this._ro.observe(host);
     this._onWindowResize = () => this._resize();
     this._onViewportResize = () => this._resize();
-    window.addEventListener("resize", this._onWindowResize);
-    window.visualViewport?.addEventListener("resize", this._onViewportResize);
     this._resize();
-
-    this._rendering = true;
-    const loop = () => {
-      if (!this._rendering) return;
-      this._tickCamera();
-      this._controls.update();
-      this._syncOverlays();
-      this._composer.render();
-      requestAnimationFrame(loop);
-    };
-    requestAnimationFrame(loop);
+    if (this.isConnected) this.connectedCallback();
   }
 
   _setSky(day) {
@@ -369,8 +421,15 @@ class PolyHome3D extends HTMLElement {
 
   _resize() {
     const host = this.shadowRoot.querySelector(".viewport");
-    const w = host.clientWidth || 640;
-    const h = host.clientHeight || 420;
+    const w = host.clientWidth;
+    const h = host.clientHeight;
+    if (!w || !h || !this._renderer) return;
+    const { left, top } = host.getBoundingClientRect();
+    const ratio = Math.min(window.devicePixelRatio, 1.75);
+    const size = [w, h, left, top, ratio];
+    if (this._lastSize?.every((value, i) => value === size[i])) return;
+    this._lastSize = size;
+    this._renderer.setPixelRatio(ratio);
     this._renderer.setSize(w, h, false);
     this._composer.setSize(w, h);
     this._camera.aspect = w / h;
@@ -383,8 +442,13 @@ class PolyHome3D extends HTMLElement {
 
   _loadModel() {
     const loader = new GLTFLoader();
+    const scene = this._scene;
     loader.load(this._config.model, (gltf) => {
       const root = gltf.scene;
+      if (scene !== this._scene) {
+        this._disposeObject(root);
+        return;
+      }
       root.traverse((child) => {
         if (!child.isMesh) return;
         child.castShadow = !!this._config.shadows;
@@ -443,6 +507,7 @@ class PolyHome3D extends HTMLElement {
       if (loading) loading.remove();
       this._applyStates();
     }, undefined, (err) => {
+      if (scene !== this._scene) return;
       const el = this.shadowRoot.querySelector(".loading");
       if (el) el.textContent = "模型加载失败：" + ((err && err.message) || err);
     });
@@ -568,9 +633,14 @@ class PolyHome3D extends HTMLElement {
     this._controls.maxDistance = Math.max(46, distance * 1.2);
     this._controls.minDistance = Math.min(this._controls.minDistance, distance * 0.5);
     if (instant) {
+      this._anim = null;
+      const damping = this._controls.enableDamping;
+      this._controls.enableDamping = false;
+      this._controls.update();
       this._camera.position.copy(to);
       this._controls.target.copy(target);
       this._controls.update();
+      this._controls.enableDamping = damping;
       return;
     }
     this._anim = {

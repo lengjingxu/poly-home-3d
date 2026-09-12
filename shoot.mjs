@@ -5,6 +5,7 @@ const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const PORT = Number(process.env.CDP_PORT || 9333);
 const W = Number(process.env.W || 1600);
 const H = Number(process.env.H || 1000);
+const DPR = Number(process.env.DPR || 1);
 const url = process.argv[2];
 const outPath = process.argv[3] || '/tmp/shot.png';
 const waitMs = Number(process.argv[4] || 8000);
@@ -66,13 +67,13 @@ try {
   await send('Runtime.enable');
   await send('Log.enable');
   await send('Page.enable');
-  await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false });
+  await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: DPR, mobile: false });
   await send('Page.navigate', { url });
   await sleep(waitMs);
 
   if (evalExpr) {
     const r = await send('Runtime.evaluate', { expression: evalExpr, returnByValue: true, awaitPromise: true });
-    console.log('EVAL:', JSON.stringify(r.result?.result?.value ?? r.result?.exceptionDetails ?? null));
+    console.log('EVAL:', JSON.stringify(r.result?.exceptionDetails ?? r.result?.result?.value ?? null));
     if (r.result?.exceptionDetails) exitCode = 1;
   }
 

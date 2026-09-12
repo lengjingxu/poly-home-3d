@@ -151,7 +151,7 @@ def triangulate(points):
             ear = True
             break
         if not ear:
-            return [(points[0], points[i], points[i + 1]) for i in range(1, len(points) - 1)]
+            raise ValueError("房间轮廓无法三角化，请检查顶点顺序或自交")
     triangles.append(tuple(points[i] for i in remaining))
     return triangles
 
@@ -176,9 +176,9 @@ class Model:
     def poly_slab(self, material, points, y0=0.0, thickness=FLOOR_T) -> None:
         points = list(points)
         for a, b, c in triangulate(points):
-            self.g(material).add_triangle([(a[0], y0, a[1]), (b[0], y0, b[1]), (c[0], y0, c[1])], (0, 1, 0))
+            self.g(material).add_triangle([(c[0], y0, c[1]), (b[0], y0, b[1]), (a[0], y0, a[1])], (0, 1, 0))
             self.g(material).add_triangle(
-                [(c[0], y0 - thickness, c[1]), (b[0], y0 - thickness, b[1]), (a[0], y0 - thickness, a[1])],
+                [(a[0], y0 - thickness, a[1]), (b[0], y0 - thickness, b[1]), (c[0], y0 - thickness, c[1])],
                 (0, -1, 0),
             )
         for i, (x0, z0) in enumerate(points):
@@ -188,7 +188,7 @@ class Model:
             if length < 0.01:
                 continue
             self.g(material).add_quad(
-                [(x0, y0 - thickness, z0), (x1, y0 - thickness, z1), (x1, y0, z1), (x0, y0, z0)],
+                [(x1, y0 - thickness, z1), (x0, y0 - thickness, z0), (x0, y0, z0), (x1, y0, z1)],
                 (dz / length, 0, -dx / length),
             )
 
@@ -259,12 +259,13 @@ ROOM_POLYGONS = {
     "主卫": [(0.10, 0.05), (1.55, 0.05), (1.55, 4.00), (0.10, 4.00)],
     "衣帽间": [(1.60, 0.05), (5.80, 0.05), (5.80, 4.00), (1.60, 4.00)],
     "卫生间": [(5.95, 0.05), (8.05, 0.05), (8.05, 3.65), (5.95, 3.65)],
-    "走廊": [(5.75, 3.70), (8.05, 3.70), (8.05, 4.65), (5.75, 4.65)],
+    "走廊": [(5.95, 3.70), (8.05, 3.70), (8.05, 4.65), (6.25, 4.65),
+             (6.25, 4.05), (5.95, 4.05)],
     "主卧": [(0.10, 4.05), (3.40, 4.05), (3.40, 9.60), (0.10, 9.60)],
     "次卧": [(3.45, 4.05), (6.25, 4.05), (6.25, 9.60), (3.45, 9.60)],
     "客餐厨": [(8.10, 0.05), (10.80, 0.05), (10.80, 1.25), (12.45, 1.25),
-               (12.45, 10.15), (8.55, 10.15), (8.55, 9.05), (6.20, 9.05),
-               (6.20, 4.65), (8.10, 4.65)],
+               (12.45, 10.15), (8.55, 10.15), (8.55, 9.05), (6.25, 9.05),
+               (6.25, 4.65), (8.10, 4.65)],
     "阳台": [(8.55, 10.20), (12.45, 10.20), (12.45, 11.15), (8.55, 11.15)],
 }
 
