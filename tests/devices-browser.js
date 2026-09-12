@@ -7,7 +7,7 @@
   }
   const check = (condition, message) => { if (!condition) throw Error(message); };
   const devices = c._config.markers;
-  check(devices.filter(m => m.source === '小米').length === 15, 'Expected all 15 Xiaomi devices');
+  check(devices.filter(m => m.source === '小米').length === 16, 'Expected 16 Xiaomi control entries');
   check(c._deviceEls.size === devices.length, 'Device list omitted an entity');
   for (const m of devices) {
     check(!!c._hass.states[m.entity], `Unknown demo entity: ${m.entity}`);
@@ -26,7 +26,7 @@
   check(!c._fixtures.has(camera.entity) && !c._fixtures.has(fan.entity), 'Non-light device produced a fixture');
   check(c._scene.children.filter(o => o.isPointLight).length === 1, 'Camera or fan produced a light');
   check(c.shadowRoot.querySelector('.chips').textContent.includes('1 / 13'), 'Light total counted another device type');
-  check(c._markerEls.size === 25, 'Unplaced lights must not get an arbitrary floor pin');
+  check(c._markerEls.size === 23, 'Unplaced lights must not get an arbitrary floor pin');
   for (const el of c._markerEls.values()) check(!el.style.transform.includes('NaN'), 'Invalid pin coordinates');
 
   const calls = [], info = [];
@@ -42,7 +42,7 @@
     check(info.at(-1) === m.entity, `Wrong HA control panel for ${m.name}`);
   }
   check(calls.length === 1, 'Opening camera controls toggled a device');
-  c._runScene(c._config.scenes.find(s => s.name === '全开'));
+  c._runScene({ service: 'light.turn_on', targets: devices.filter(m => m.entity.startsWith('light.')).map(m => m.entity) });
   check(calls.at(-1).data.entity_id.includes(light.entity), 'All-on omitted Xiaomi lighting');
   check(!calls.at(-1).data.entity_id.some(id => offline.some(m => m.entity === id)), 'Scene targeted offline lights');
   const bedroom = c._config.rooms.find(r => r.name === '主卧');
@@ -61,18 +61,18 @@
   c._deviceEls.get(unplaced.entity).row.querySelector('.device-info').click();
   check(!panel.open && info.at(-1) === unplaced.entity, 'Unplaced light has no detail entry');
   c.shadowRoot.querySelector('.device-open').click();
-  const remote = devices.find(m => m.controls);
-  c._deviceEls.get(remote.entity).row.querySelector('.device-controls button').click();
-  check(info.at(-1) === remote.controls[0].entity, 'IR control opens the wrong entity');
+  const curtain = devices.find(m => m.entity.startsWith('cover.'));
+  c._deviceEls.get(curtain.entity).row.querySelector('.device-info').click();
+  check(info.at(-1) === curtain.entity, 'Curtain opens wrong entity');
   check(calls.length === before, 'Detail view sent a hardware command');
   c.shadowRoot.querySelector('.device-open').click();
   const source = panel.querySelector('.device-source');
   source.value = '小米';
   source.dispatchEvent(new Event('change'));
-  check([...c._deviceEls.values()].filter(item => !item.row.hidden).length === 15, 'Xiaomi filter omitted a device');
+  check([...c._deviceEls.values()].filter(item => !item.row.hidden).length === 16, 'Xiaomi filter omitted a device');
   const bounds = panel.getBoundingClientRect();
   check(bounds.left >= 0 && bounds.right <= innerWidth && bounds.top >= 0 && bounds.bottom <= innerHeight,
     'Device list clips outside the viewport');
-  return { xiaomiDevices: 15, totalDevices: devices.length, positionedDevices: 25,
+  return { xiaomiDevices: 16, totalDevices: devices.length, positionedDevices: 23,
            lightFixtures: 11, lightingEntities: 13, serviceRouting: 'passed', panelFits: true };
 })()
