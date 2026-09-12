@@ -75,6 +75,7 @@ class PolyHome3D extends HTMLElement {
     this._hass = null;
     this._rendering = false;
     this._focus = "全屋";
+    this._layout = { mode: "card", offsetX: 0, offsetY: 0 };
   }
 
   static getStubConfig() {
@@ -122,6 +123,10 @@ class PolyHome3D extends HTMLElement {
   disconnectedCallback() {
     this._rendering = false;
     if (this._ro) this._ro.disconnect();
+    if (this._onWindowResize) window.removeEventListener("resize", this._onWindowResize);
+    if (this._onViewportResize && window.visualViewport) {
+      window.visualViewport.removeEventListener("resize", this._onViewportResize);
+    }
   }
 
   // ---------- DOM ----------
@@ -318,6 +323,10 @@ class PolyHome3D extends HTMLElement {
 
     this._ro = new ResizeObserver(() => this._resize());
     this._ro.observe(host);
+    this._onWindowResize = () => this._resize();
+    this._onViewportResize = () => this._resize();
+    window.addEventListener("resize", this._onWindowResize);
+    window.visualViewport?.addEventListener("resize", this._onViewportResize);
     this._resize();
 
     this._rendering = true;
@@ -366,7 +375,10 @@ class PolyHome3D extends HTMLElement {
     this._composer.setSize(w, h);
     this._camera.aspect = w / h;
     this._camera.updateProjectionMatrix();
-    if (this._bounds && this._focus === "全屋") this._frameCamera(null, true);
+    if (this._bounds) {
+      const room = (this._config.rooms || []).find((item) => item.name === this._focus);
+      this._frameCamera(room ? room.rect : null, true);
+    }
   }
 
   _loadModel() {
@@ -454,6 +466,80 @@ class PolyHome3D extends HTMLElement {
     return d * 1.06;
   }
 
+  _readLayout() {
+    const rect = this.shadowRoot.querySelector(".viewport").getBoundingClientRect();
+    const viewport = window.visualViewport;
+    const viewportWidth = viewport?.width || window.innerWidth;
+    const viewportHeight = viewport?.height || window.innerHeight;
+    const panel = rect.width >= viewportWidth * 0.7 && rect.height >= viewportHeight * 0.65;
+    if (!panel) return { mode: "card", width: rect.width, height: rect.height, offsetX: 0, offsetY: 0 };
+
+    const offsetX = rect.left + rect.width / 2 - viewportWidth / 2;
+    const offsetY = rect.top + rect.height / 2 - viewportHeight / 2;
+    if (Math.abs(offsetX) < 1 && Math.abs(offsetY) < 1) {
+      return { mode: "card", width: rect.width, height: rect.height, offsetX: 0, offsetY: 0 };
+    }
+    return {
+      mode: offsetX > 1 ? "shell-right" : offsetX < -1 ? "shell-left" : "shell",
+      width: rect.width,
+      height: rect.height,
+      offsetX,
+      offsetY,
+    };
+  }
+
+  _applyLayout(layout) {
+    this._layout = layout;
+    const wrap = this.shadowRoot.querySelector(".wrap");
+    if (wrap) {
+      wrap.dataset.layout = layout.mode;
+      wrap.style.setProperty("--poly-layout-offset-x", layout.offsetX.toFixed(2) + "px");
+    }
+    if (layout.offsetX || layout.offsetY) {
+      this._camera.setViewOffset(
+        layout.width, layout.height, layout.offsetX, layout.offsetY, layout.width, layout.height,
+      );
+    } else {
+      this._camera.clearViewOffset();
+    }
+  }
+
+  _fitLayoutDistance(target, corners, distance, layout) {
+    this._applyLayout(layout);
+    if (!layout.offsetX && !layout.offsetY) return distance;
+
+    const camera = this._camera;
+    const savedPosition = camera.position.clone();
+    const savedQuaternion = camera.quaternion.clone();
+    const fits = (candidate) => {
+      camera.position.copy(target).add(VIEW_DIR.clone().multiplyScalar(candidate));
+      camera.lookAt(target);
+      camera.updateMatrixWorld(true);
+      for (const corner of corners) {
+        this._tmp.copy(corner).project(camera);
+        if (this._tmp.x < -0.995 || this._tmp.x > 0.995 || this._tmp.y < -0.995 || this._tmp.y > 0.995) {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    let low = distance;
+    let high = distance;
+    while (!fits(high) && high < 180) high *= 1.15;
+    if (fits(high)) {
+      for (let i = 0; i < 12; i += 1) {
+        const middle = (low + high) / 2;
+        if (fits(middle)) high = middle;
+        else low = middle;
+      }
+    }
+    camera.position.copy(savedPosition);
+    camera.quaternion.copy(savedQuaternion);
+    camera.updateMatrixWorld(true);
+    return high;
+  }
+
   _frameCamera(rect, instant) {
     const { center } = this._bounds;
     const bb = this._bounds.box;
@@ -474,7 +560,8 @@ class PolyHome3D extends HTMLElement {
         }
       }
     }
-    const distance = this._fitDistance(target, corners);
+    const layout = this._readLayout();
+    const distance = this._fitLayoutDistance(target, corners, this._fitDistance(target, corners), layout);
     const cam = this._config.camera;
     const to = target.clone().add(VIEW_DIR.clone().multiplyScalar(distance));
     if (cam && cam.position && !rect) to.fromArray(cam.position);
