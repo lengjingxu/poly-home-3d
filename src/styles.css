@@ -131,3 +131,11 @@ ha-card { height: 100%; display: block; background: transparent; border: none; b
   .roomlbl { font-size: 10.5px; }
   .marker .tag { font-size: 9px; padding: 2px 5px; }
 }
+
+.temperature-panel p { font-size: 12px; line-height: 1.6; color: #b7b0a5; }
+.temperature-panel label { display: flex; justify-content: space-between; font-size: 14px; }
+.temperature-panel output { color: #ffca99; font-variant-numeric: tabular-nums; }
+.temperature-panel input { width: 100%; margin: 12px 0 0; height: 44px; accent-color: #ffb066; }
+.temperature-scale { display: flex; justify-content: space-between; font-size: 12px; color: #b7b0a5; }
+.scenes { flex-wrap: wrap; justify-content: center; width: max-content; max-width: calc(100% - 28px); }
+@media (max-width: 700px) { .scenes { width: auto; } }
