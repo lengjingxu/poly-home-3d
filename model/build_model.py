@@ -57,6 +57,13 @@ class Group:
             self.nrm.extend(normal)
         self.idx.extend([base, base + 1, base + 2, base, base + 2, base + 3])
 
+    def add_triangle(self, verts, normal) -> None:
+        base = len(self.pos) // 3
+        for v in verts:
+            self.pos.extend(v)
+            self.nrm.extend(normal)
+        self.idx.extend([base, base + 1, base + 2])
+
     def add_box(self, cx, cy, cz, sx, sy, sz, rot_y=0.0) -> None:
         hx, hy, hz = sx / 2, sy / 2, sz / 2
         corners = [
@@ -99,6 +106,54 @@ class Group:
                 )
 
 
+def polygon_area(points) -> float:
+    return sum(points[i][0] * points[(i + 1) % len(points)][1]
+               - points[(i + 1) % len(points)][0] * points[i][1]
+               for i in range(len(points))) / 2
+
+
+def triangulate(points):
+    points = list(points)
+    if polygon_area(points) < 0:
+        points.reverse()
+    remaining = list(range(len(points)))
+    triangles = []
+
+    def inside(point, a, b, c) -> bool:
+        px, py = point
+        ab = (b[0] - a[0], b[1] - a[1])
+        bc = (c[0] - b[0], c[1] - b[1])
+        ca = (a[0] - c[0], a[1] - c[1])
+        ap = (px - a[0], py - a[1])
+        bp = (px - b[0], py - b[1])
+        cp = (px - c[0], py - c[1])
+        cross = lambda u, v: u[0] * v[1] - u[1] * v[0]
+        return cross(ab, ap) >= 0 and cross(bc, bp) >= 0 and cross(ca, cp) >= 0
+
+    while len(remaining) > 3:
+        ear = False
+        for i, curr in enumerate(remaining):
+            prev = remaining[i - 1]
+            nxt = remaining[(i + 1) % len(remaining)]
+            a, b, c = points[prev], points[curr], points[nxt]
+            cross = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+            if cross <= 1e-6:
+                continue
+            if any(
+                other not in (prev, curr, nxt) and inside(points[other], a, b, c)
+                for other in remaining
+            ):
+                continue
+            triangles.append((a, b, c))
+            remaining.pop(i)
+            ear = True
+            break
+        if not ear:
+            return [(points[0], points[i], points[i + 1]) for i in range(1, len(points) - 1)]
+    triangles.append(tuple(points[i] for i in remaining))
+    return triangles
+
+
 class Model:
     def __init__(self) -> None:
         self.groups: dict[str, Group] = {}
@@ -115,6 +170,66 @@ class Model:
     def slab(self, material, x0, z0, x1, z1, y0=0.0, thickness=FLOOR_T) -> None:
         self.box(material, (x0 + x1) / 2, y0 - thickness / 2, (z0 + z1) / 2,
                  x1 - x0, thickness, z1 - z0)
+
+    def poly_slab(self, material, points, y0=0.0, thickness=FLOOR_T) -> None:
+        points = list(points)
+        for a, b, c in triangulate(points):
+            self.g(material).add_triangle([(a[0], y0, a[1]), (b[0], y0, b[1]), (c[0], y0, c[1])], (0, 1, 0))
+            self.g(material).add_triangle(
+                [(c[0], y0 - thickness, c[1]), (b[0], y0 - thickness, b[1]), (a[0], y0 - thickness, a[1])],
+                (0, -1, 0),
+            )
+        for i, (x0, z0) in enumerate(points):
+            x1, z1 = points[(i + 1) % len(points)]
+            dx, dz = x1 - x0, z1 - z0
+            length = math.hypot(dx, dz)
+            if length < 0.01:
+                continue
+            self.g(material).add_quad(
+                [(x0, y0 - thickness, z0), (x1, y0 - thickness, z1), (x1, y0, z1), (x0, y0, z0)],
+                (dz / length, 0, -dx / length),
+            )
+
+    def wall_segment(self, material, p0, p1, gaps=(), height=WALL_H) -> None:
+        x0, z0 = p0
+        x1, z1 = p1
+        dx, dz = x1 - x0, z1 - z0
+        length = math.hypot(dx, dz)
+        if length < 0.01:
+            return
+        angle = math.atan2(-dz, dx)
+        cursor = 0.0
+        for start, end in sorted(gaps):
+            start, end = max(0, start), min(length, end)
+            if start > cursor:
+                self._wall_piece(material, p0, dx, dz, cursor, start, angle, height)
+            cursor = max(cursor, end)
+        if cursor < length:
+            self._wall_piece(material, p0, dx, dz, cursor, length, angle, height)
+
+    def _wall_piece(self, material, p0, dx, dz, start, end, angle, height) -> None:
+        length = end - start
+        mid = (start + end) / 2
+        self.box(
+            material,
+            p0[0] + dx / math.hypot(dx, dz) * mid,
+            height / 2,
+            p0[1] + dz / math.hypot(dx, dz) * mid,
+            length,
+            height,
+            WALL_T,
+            angle,
+        )
+        self.box(
+            "wall_cap",
+            p0[0] + dx / math.hypot(dx, dz) * mid,
+            height + BAND_H / 2,
+            p0[1] + dz / math.hypot(dx, dz) * mid,
+            length,
+            BAND_H,
+            WALL_T,
+            angle,
+        )
 
     def wall_run(self, material, axis, fixed, start, end, gaps, height=WALL_H) -> None:
         """axis='x' 表示墙沿 X 方向延伸（fixed 是 z），反之亦然。"""
@@ -138,102 +253,126 @@ class Model:
                 self.box("wall_cap", fixed, height + BAND_H / 2, mid, WALL_T, BAND_H, length)
 
 
-ROOMS = {
-    "次卧二": (0.00, 0.00, 2.70, 3.20),
-    "次卧一": (2.70, 0.00, 7.10, 2.30),
-    "北次卧": (7.10, 0.00, 11.06, 2.30),
-    "走廊":   (0.00, 3.20, 2.70, 6.30),
-    "餐厅":   (2.70, 2.30, 7.10, 4.70),
-    "厨房":   (7.10, 2.30, 11.06, 4.70),
-    "客厅":   (2.70, 4.70, 7.10, 8.06),
-    "玄关":   (0.00, 6.30, 2.70, 8.06),
-    "主卧":   (7.10, 4.70, 11.06, 8.06),
+ROOM_POLYGONS = {
+    "主卧": [
+        (1.90, 0.02), (2.46, 0.02), (2.46, 1.78), (3.82, 1.78),
+        (3.82, 0.02), (5.90, 0.02), (5.90, 0.73), (6.14, 0.73),
+        (6.14, 0.02), (6.88, 0.02), (6.88, 0.55), (7.25, 0.55),
+        (7.25, 0.02), (8.54, 0.02), (8.54, 1.84), (6.00, 1.84),
+        (6.00, 4.38), (5.06, 4.38), (5.06, 3.20), (1.94, 3.20),
+    ],
+    "衣帽间": [(6.00, 1.90), (8.54, 1.90), (8.54, 4.45), (6.35, 4.45), (6.00, 4.05)],
+    "卫生间": [(6.10, 4.58), (8.54, 4.58), (8.54, 6.16), (7.92, 6.16),
+               (7.92, 5.63), (7.35, 5.63), (7.35, 6.16), (6.10, 6.16)],
+    "走廊": [(4.68, 4.42), (6.00, 4.42), (6.00, 6.45), (5.05, 6.45),
+             (5.05, 6.15), (4.68, 6.15)],
+    "次卧": [(1.76, 3.88), (4.30, 3.88), (4.65, 4.32), (4.65, 6.15),
+             (4.05, 6.15), (4.05, 6.40), (1.76, 6.40)],
+    "客餐厨": [(1.75, 6.65), (5.05, 6.65), (5.05, 7.25), (8.54, 7.05),
+               (8.54, 9.90), (10.95, 9.90), (10.95, 11.05), (11.10, 11.05),
+               (11.10, 12.45), (10.90, 12.45), (10.90, 12.75), (8.65, 12.75),
+               (8.65, 13.00), (2.00, 13.00), (2.00, 12.25), (1.75, 12.25),
+               (1.75, 10.65), (0.05, 10.65), (0.05, 8.45), (0.65, 8.80),
+               (1.75, 9.35)],
 }
 
-# 外墙上开窗：墙 -> [(起, 止)]
-WINDOWS = {
-    ("z", -0.06): [(3.55, 5.25), (8.05, 10.15)],
-    ("z", 8.06): [(0.55, 1.25), (3.35, 6.45), (8.10, 10.20)],
-    ("x", -0.06): [(0.85, 2.25)],
-    ("x", 11.06): [(2.95, 4.05), (5.60, 7.20)],
-}
+OUTER_WALL = [
+    (1.90, 0.00), (2.46, 0.00), (2.46, 1.78), (3.82, 1.78), (3.82, 0.00),
+    (5.90, 0.00), (5.90, 0.73), (6.14, 0.73), (6.14, 0.00), (6.88, 0.00),
+    (6.88, 0.55), (7.25, 0.55), (7.25, 0.00), (8.54, 0.00), (8.54, 1.84),
+    (8.54, 4.58), (8.54, 6.16), (8.54, 7.05), (8.54, 9.90), (10.95, 9.90),
+    (10.95, 11.05), (11.10, 11.05), (11.10, 12.45), (10.90, 12.45),
+    (10.90, 12.75), (8.65, 12.75), (8.65, 13.00), (2.00, 13.00),
+    (2.00, 12.25), (1.75, 12.25), (1.75, 10.65), (0.05, 10.65),
+    (0.05, 8.45), (0.65, 8.80), (1.75, 9.35), (1.75, 6.40), (1.75, 3.88),
+    (1.90, 3.20),
+]
+
+INTERIOR_WALLS = [
+    ((1.94, 3.20), (5.06, 3.20), [(2.40, 3.25)]),
+    ((1.76, 3.88), (4.30, 3.88), [(2.35, 3.15)]),
+    ((4.65, 4.32), (4.65, 6.15), [(0.25, 1.05)]),
+    ((1.76, 6.40), (4.65, 6.40), [(2.10, 2.95)]),
+    ((5.06, 3.20), (5.06, 4.38), [(0.18, 0.88)]),
+    ((6.00, 1.90), (6.00, 4.05), [(0.85, 1.65)]),
+    ((6.00, 4.45), (8.54, 4.45), [(0.85, 1.65)]),
+    ((6.10, 4.58), (8.54, 4.58), [(0.80, 1.60)]),
+    ((6.10, 4.58), (6.10, 6.16), [(0.35, 1.10)]),
+    ((6.00, 5.40), (6.00, 6.45), [(0.35, 1.00)]),
+    ((4.68, 6.15), (5.05, 6.15), []),
+]
+
+WINDOWS = [
+    ((3.82, 0.02), (5.90, 0.02), 0.15, 1.85),
+    ((7.25, 0.02), (8.54, 0.02), 0.10, 1.15),
+    ((1.90, 0.02), (1.90, 3.20), 0.25, 2.65),
+    ((2.00, 13.00), (8.65, 13.00), 0.20, 6.10),
+    ((10.95, 11.05), (10.95, 12.45), 0.10, 1.25),
+    ((0.05, 8.45), (0.05, 10.65), 0.20, 1.60),
+]
 WINDOW_SILL = 0.34
 WINDOW_HEAD = 1.02
 
 
 def build_floors(m: Model) -> None:
-    tile = {"厨房"}
-    for name, (x0, z0, x1, z1) in ROOMS.items():
-        m.slab("floor_tile" if name in tile else "floor_wood", x0, z0, x1, z1)
-    m.slab("plinth", -0.26, -0.26, 11.26, 8.26, y0=-FLOOR_T, thickness=PLINTH_T)
+    for name, points in ROOM_POLYGONS.items():
+        m.poly_slab("floor_tile" if name == "卫生间" else "floor_wood", points)
+    m.slab("plinth", -0.26, -0.26, 11.36, 13.26, y0=-FLOOR_T, thickness=PLINTH_T)
 
 
 def build_walls(m: Model) -> None:
-    def gaps(axis, fixed):
-        return WINDOWS.get((axis, fixed), [])
-
-    m.wall_run("wall", "x", -0.06, -0.06, 11.06, gaps("x", -0.06))
-    m.wall_run("wall", "x", 8.06, -0.06, 11.06, [(1.00, 2.05)] + gaps("x", 8.06))
-    m.wall_run("wall", "z", -0.06, -0.06, 8.06, gaps("z", -0.06))
-    m.wall_run("wall", "z", 11.06, -0.06, 8.06, gaps("z", 11.06))
-
-    m.wall_run("wall", "x", 3.20, 0.00, 2.60, [(0.95, 1.85)])
-    m.wall_run("wall", "x", 2.30, 2.80, 11.00, [(4.10, 5.00), (9.10, 10.00)])
-    m.wall_run("wall", "x", 4.70, 7.20, 11.00, [])
-    m.wall_run("wall", "z", 2.70, -0.06, 2.30, [])
-    m.wall_run("wall", "z", 2.70, 3.30, 8.06, [(4.80, 5.80)])
-    m.wall_run("wall", "z", 7.10, -0.06, 2.30, [])
-    m.wall_run("wall", "z", 7.10, 2.40, 8.06, [(3.00, 3.90), (6.30, 7.20)])
+    for i, start in enumerate(OUTER_WALL):
+        m.wall_segment("wall", start, OUTER_WALL[(i + 1) % len(OUTER_WALL)])
+    for p0, p1, gaps in INTERIOR_WALLS:
+        m.wall_segment("wall", p0, p1, gaps)
 
 
 def build_windows(m: Model) -> None:
     """把外墙洞口补上玻璃和窗框。"""
     frame_t = 0.05
-    for (axis, fixed), spans in WINDOWS.items():
-        for a, b in spans:
-            mid = (a + b) / 2
-            length = b - a
-            h = WINDOW_HEAD - WINDOW_SILL
-            cy = WINDOW_SILL + h / 2
-            if axis == "x":
-                m.box("glass", mid, cy, fixed, length - 0.04, h - 0.04, 0.03)
-                m.box("metal_dark", mid, WINDOW_SILL - frame_t / 2, fixed, length, frame_t, 0.16)
-                m.box("metal_dark", mid, WINDOW_HEAD + frame_t / 2, fixed, length, frame_t, 0.16)
-                for x in (a, mid, b):
-                    m.box("metal_dark", x, cy, fixed, frame_t, h, 0.16)
-            else:
-                m.box("glass", fixed, cy, mid, 0.03, h - 0.04, length - 0.04)
-                m.box("metal_dark", fixed, WINDOW_SILL - frame_t / 2, mid, 0.16, frame_t, length)
-                m.box("metal_dark", fixed, WINDOW_HEAD + frame_t / 2, mid, 0.16, frame_t, length)
-                for z in (a, mid, b):
-                    m.box("metal_dark", fixed, cy, z, 0.16, h, frame_t)
+    for p0, p1, start, end in WINDOWS:
+        dx, dz = p1[0] - p0[0], p1[1] - p0[1]
+        length = math.hypot(dx, dz)
+        angle = math.atan2(-dz, dx)
+        unit = (dx / length, dz / length)
+        mid = (start + end) / 2
+        cx = p0[0] + unit[0] * mid
+        cz = p0[1] + unit[1] * mid
+        span = end - start
+        h = WINDOW_HEAD - WINDOW_SILL
+        cy = WINDOW_SILL + h / 2
+        m.box("glass", cx, cy, cz, span - 0.04, h - 0.04, 0.03, angle)
+        m.box("metal_dark", cx, WINDOW_SILL - frame_t / 2, cz, span, frame_t, 0.16, angle)
+        m.box("metal_dark", cx, WINDOW_HEAD + frame_t / 2, cz, span, frame_t, 0.16, angle)
+        for at in (start, mid, end):
+            fx = p0[0] + unit[0] * at
+            fz = p0[1] + unit[1] * at
+            m.box("metal_dark", fx, cy, fz, frame_t, h, 0.16, angle)
 
 
 def build_door_frames(m: Model) -> None:
     """门洞两侧的竖向门套。"""
     jambs = [
-        ("x", 3.20, 0.95), ("x", 3.20, 1.85),
-        ("x", 2.30, 4.10), ("x", 2.30, 5.00), ("x", 2.30, 9.10), ("x", 2.30, 10.00),
-        ("z", 2.70, 4.80), ("z", 2.70, 5.80),
-        ("z", 7.10, 3.00), ("z", 7.10, 3.90), ("z", 7.10, 6.30), ("z", 7.10, 7.20),
-        ("x", 8.06, 1.00), ("x", 8.06, 2.05),
+        (5.06, 3.38, math.pi / 2), (5.06, 4.20, math.pi / 2),
+        (4.65, 4.55, 0), (4.65, 5.35, 0),
+        (3.95, 6.40, 0), (4.77, 6.40, 0),
+        (6.00, 2.75, math.pi / 2), (6.00, 3.55, math.pi / 2),
+        (6.85, 4.45, 0), (7.65, 4.45, 0),
+        (6.10, 4.90, 0), (6.10, 5.70, 0),
     ]
-    for axis, fixed, at in jambs:
-        if axis == "x":
-            m.box("wood_light", at, WALL_H / 2, fixed, 0.07, WALL_H, WALL_T + 0.02)
-        else:
-            m.box("wood_light", fixed, WALL_H / 2, at, WALL_T + 0.02, WALL_H, 0.07)
+    for x, z, rot in jambs:
+        m.box("wood_light", x, WALL_H / 2, z, 0.07, WALL_H, WALL_T + 0.02, rot)
 
 
 def build_doors(m: Model) -> None:
     """开着的门扇，给剖切模型一点生活感。"""
     leaves = [
-        (1.02, 8.00, 0.95, -0.62),
-        (2.70, 5.10, 1.00, 1.15),
-        (7.10, 3.40, 0.90, -1.25),
-        (7.10, 6.60, 1.00, 1.20),
-        (3.20, 1.40, 0.90, -1.05),
-        (9.55, 2.30, 0.90, 0.55),
+        (5.06, 3.82, 0.82, 0.0),
+        (4.65, 4.95, 0.82, math.pi / 2),
+        (4.36, 6.40, 0.82, math.pi),
+        (6.00, 3.15, 0.82, math.pi / 2),
+        (7.25, 4.45, 0.82, 0.0),
+        (6.10, 5.30, 0.82, math.pi / 2),
     ]
     for x, z, width, angle in leaves:
         m.box("wood_light", x, WALL_H / 2 - 0.02, z, width, WALL_H - 0.06, 0.04, rot_y=angle)
@@ -304,74 +443,49 @@ def counter(m: Model, x0, z0, x1, z1, h=0.86) -> None:
 
 
 def furniture(m: Model) -> None:
+    rug(m, 2.45, 9.00, 7.70, 11.60)
+    sofa(m, 5.20, 11.30, 3.10, 0.96)
+    table(m, 5.20, 10.15, 1.15, 0.68, 0.36)
+    m.box("screen", 2.20, 0.86, 10.25, 1.55, 0.88, 0.05)
+    m.box("wood_dark", 2.20, 0.25, 10.25, 2.00, 0.36, 0.42)
+    m.box("metal_dark", 2.20, 0.45, 10.25, 0.30, 0.10, 0.16)
+    plant(m, 8.15, 11.95, 0.55)
 
-    # 客厅
-    rug(m, 3.50, 5.10, 6.70, 7.30)
-    sofa(m, 4.60, 7.20, 2.40)
-    table(m, 4.60, 6.10, 1.10, 0.62, 0.36)
-    m.box("ceramic", 4.60, 0.43, 6.10, 0.22, 0.09, 0.22)
-    m.box("wood_dark", 4.60, 0.24, 4.90, 1.90, 0.36, 0.42)
-    m.box("screen", 4.60, 0.80, 4.72, 1.48, 0.84, 0.05)
-    m.box("metal_dark", 4.60, 0.42, 4.72, 0.30, 0.10, 0.16)
-    plant(m, 6.55, 7.55, 0.42)
-    m.cyl("wood_light", 6.55, 0.26, 5.20, 0.24, 0.52, 14)
-    m.cyl("ceramic", 6.55, 0.55, 5.20, 0.16, 0.06, 14)
-    m.box("art", 4.10, 0.80, 2.36, 0.76, 0.56, 0.03)
+    table(m, 3.35, 8.00, 1.70, 0.86, 0.40)
+    for dx in (-0.58, 0.58):
+        chair(m, 3.35 + dx, 7.38)
+        chair(m, 3.35 + dx, 8.62, math.pi)
+    m.box("wood_dark", 1.15, 0.50, 9.78, 1.45, 0.92, 0.42)
+    m.box("wood_light", 1.15, 1.00, 9.78, 1.48, 0.04, 0.46)
+    m.box("fabric", 1.55, 0.24, 9.05, 0.46, 0.44, 0.90)
 
-    # 餐厅
-    table(m, 4.90, 3.40, 1.60, 0.92, 0.40)
-    for dx in (-0.56, 0.56):
-        chair(m, 4.90 + dx, 2.78)
-        chair(m, 4.90 + dx, 4.02, math.pi)
-    m.box("wood_dark", 3.20, 0.30, 3.40, 0.36, 0.60, 1.20)
-    m.cyl("ceramic", 4.90, 0.48, 3.40, 0.14, 0.10, 14)
+    counter(m, 6.15, 7.00, 8.45, 7.58)
+    counter(m, 7.85, 7.58, 8.45, 8.55)
+    counter(m, 6.35, 8.25, 7.55, 8.82, 0.92)
+    m.box("metal", 6.65, 0.92, 7.28, 0.56, 0.04, 0.42)
+    m.box("metal_dark", 7.55, 0.92, 7.28, 0.60, 0.05, 0.44)
+    m.box("white", 8.20, 0.88, 8.18, 0.52, 1.70, 0.62)
+    m.box("metal", 8.20, 0.92, 8.18, 0.02, 1.54, 0.58)
 
-    # 厨房
-    counter(m, 7.32, 2.52, 8.70, 3.08)
-    counter(m, 7.32, 3.08, 7.88, 4.48)
-    counter(m, 9.70, 2.52, 10.88, 3.08)
-    m.box("metal", 8.20, 0.90, 2.80, 0.56, 0.04, 0.42)
-    m.box("metal_dark", 9.20, 0.92, 2.80, 0.62, 0.05, 0.44)
-    m.box("white", 10.42, 0.88, 4.05, 0.68, 1.76, 0.72)
-    m.box("metal", 10.42, 0.92, 4.05, 0.02, 1.60, 0.70)
-    m.box("white", 7.45, 0.52, 3.90, 0.30, 0.80, 0.80)
+    bed(m, 3.45, 1.70, 1.82, 2.25)
+    m.cyl("wood_light", 2.28, 0.24, 0.48, 0.20, 0.48, 14)
+    m.cyl("ceramic", 2.28, 0.55, 0.48, 0.13, 0.22, 14)
+    wardrobe(m, 5.22, 2.72, 0.54, 1.12)
+    rug(m, 2.40, 0.72, 4.55, 2.90)
 
-    # 玄关
-    m.box("wood_dark", 0.90, 0.50, 7.72, 1.60, 1.00, 0.38)
-    m.box("wood_light", 0.90, 1.02, 7.72, 1.64, 0.04, 0.42)
-    m.box("fabric", 2.20, 0.24, 6.85, 0.48, 0.44, 1.10)
-    m.box("art", 1.90, 0.78, 8.02, 0.60, 0.44, 0.03)
+    bed(m, 3.12, 5.18, 1.56, 2.00)
+    table(m, 2.08, 5.22, 0.48, 0.48, 0.48)
+    chair(m, 2.10, 5.82, math.pi)
+    wardrobe(m, 4.18, 5.10, 0.48, 1.10)
+    rug(m, 2.18, 4.32, 4.10, 6.05)
 
-    # 走廊
-    m.box("wood_light", 0.70, 0.40, 4.60, 1.00, 0.80, 0.28)
-    m.cyl("ceramic", 0.70, 0.88, 4.60, 0.13, 0.16, 14)
-
-    # 主卧
-    bed(m, 9.20, 6.20, 1.86, 2.10)
-    m.cyl("wood_light", 7.95, 0.24, 5.35, 0.20, 0.48, 14)
-    m.cyl("ceramic", 7.95, 0.55, 5.35, 0.13, 0.22, 14)
-    m.cyl("wood_light", 10.45, 0.24, 5.35, 0.20, 0.48, 14)
-    m.cyl("ceramic", 10.45, 0.55, 5.35, 0.13, 0.22, 14)
-    wardrobe(m, 10.20, 7.55, 1.30, 0.58)
-    rug(m, 8.20, 7.10, 10.00, 7.60)
-
-    # 次卧一
-    bed(m, 4.00, 1.15, 1.50, 1.95)
-    table(m, 3.05, 0.55, 0.42, 0.42, 0.46)
-    table(m, 6.55, 1.15, 0.60, 1.35, 0.72)
-    chair(m, 6.10, 1.15, -math.pi / 2)
-    wardrobe(m, 6.40, 0.36, 1.20, 0.48)
-
-    # 次卧二
-    bed(m, 1.05, 1.35, 1.24, 1.94)
-    table(m, 2.28, 0.60, 0.44, 0.44, 0.48)
-    wardrobe(m, 2.30, 2.55, 0.52, 1.10)
-
-    # 北次卧
-    bed(m, 8.30, 1.10, 1.24, 1.92)
-    table(m, 9.55, 0.72, 0.50, 1.10, 0.70)
-    chair(m, 9.20, 1.55, -math.pi / 2)
-    wardrobe(m, 10.55, 1.40, 0.50, 1.30)
+    wardrobe(m, 7.25, 2.82, 1.55, 0.52)
+    wardrobe(m, 7.25, 3.58, 1.55, 0.52)
+    m.box("metal", 7.25, 0.70, 2.98, 0.66, 0.06, 0.36)
+    m.box("white", 6.62, 0.20, 5.18, 0.48, 0.38, 0.42)
+    m.cyl("ceramic", 7.65, 0.20, 5.22, 0.23, 0.40, 14)
+    m.box("white", 8.12, 0.28, 5.90, 0.44, 0.56, 0.48)
+    m.box("art", 5.48, 0.78, 5.48, 0.52, 0.44, 0.03)
 
 
 def export_glb(model: Model, path: Path) -> None:
@@ -465,4 +579,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
