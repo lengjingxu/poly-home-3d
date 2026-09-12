@@ -366,6 +366,7 @@ class PolyHome3D extends HTMLElement {
     this._composer.setSize(w, h);
     this._camera.aspect = w / h;
     this._camera.updateProjectionMatrix();
+    if (this._bounds && this._focus === "全屋") this._frameCamera(null, true);
   }
 
   _loadModel() {
@@ -477,6 +478,7 @@ class PolyHome3D extends HTMLElement {
     const cam = this._config.camera;
     const to = target.clone().add(VIEW_DIR.clone().multiplyScalar(distance));
     if (cam && cam.position && !rect) to.fromArray(cam.position);
+    this._controls.maxDistance = Math.max(46, distance * 1.2);
     this._controls.minDistance = Math.min(this._controls.minDistance, distance * 0.5);
     if (instant) {
       this._camera.position.copy(to);
@@ -805,4 +807,3 @@ window.customCards.push({
   name: "Poly Home 3D",
   description: "保利智家 3D 中控：真三维户型、暖光联动、点击控制。",
 });
-
