@@ -216,6 +216,7 @@ class PolyHome3D extends HTMLElement {
     this._buildScenes();
     this._buildMarkers();
     this._buildDevices();
+    this._buildTemperature();
     this._setupThree();
     this._loadModel();
   }
@@ -283,6 +284,82 @@ class PolyHome3D extends HTMLElement {
     devices.textContent = "设备 " + this._config.markers.length;
     devices.addEventListener("click", () => this.shadowRoot.querySelector(".device-panel").showModal());
     box.appendChild(devices);
+  }
+
+  _buildTemperature() {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "scene temperature-open";
+    button.textContent = "全屋色温";
+    const panel = document.createElement("dialog");
+    panel.className = "device-panel temperature-panel";
+    panel.innerHTML = '<header><h2>全屋色温</h2><button type="button" class="device-close">关闭</button></header>'
+      + '<p>调节会开启在线且支持色温的灯；超出单灯范围时取其边界值。</p>'
+      + '<label for="temperature">目标色温 <output>4000 K</output></label>'
+      + '<input id="temperature" type="range" step="1" aria-label="全屋色温">'
+      + '<div class="temperature-scale"><span>暖光</span><span>冷白光</span></div>'
+      + '<p class="temperature-status" role="status" aria-live="polite"></p>';
+    this.shadowRoot.querySelector(".wrap").appendChild(panel);
+    this.shadowRoot.querySelector(".scenes").appendChild(button);
+    const slider = panel.querySelector("input");
+    button.addEventListener("click", () => { this._paintTemperature(); panel.showModal(); });
+    panel.querySelector("button").addEventListener("click", () => panel.close());
+    slider.addEventListener("input", () => { panel.querySelector("output").textContent = slider.value + " K"; });
+    slider.addEventListener("change", () => this._setTemperature(Number(slider.value)));
+    this._paintTemperature();
+  }
+
+  _temperatureLights() {
+    const ids = new Set([
+      ...this._config.markers.map(m => m.entity),
+      ...this._config.rooms.flatMap(r => r.lights || []),
+    ]);
+    return [...ids].filter(id => id.startsWith("light.") && this._available(id)).flatMap(id => {
+      const a = this._hass.states[id].attributes;
+      const min = a.min_color_temp_kelvin, max = a.max_color_temp_kelvin;
+      return a.supported_color_modes?.includes("color_temp") && Number.isFinite(min)
+        && Number.isFinite(max) && min > 0 && max >= min ? [{ id, min, max }] : [];
+    });
+  }
+
+  _paintTemperature() {
+    const panel = this.shadowRoot.querySelector(".temperature-panel");
+    if (!panel || this._temperatureBusy) return;
+    const lights = this._temperatureLights();
+    const slider = panel.querySelector("input");
+    slider.disabled = !lights.length;
+    if (lights.length) {
+      slider.min = Math.min(...lights.map(l => l.min));
+      slider.max = Math.max(...lights.map(l => l.max));
+      if (this.shadowRoot.activeElement !== slider) {
+        slider.value = this._temperatureValue ?? Math.max(Number(slider.min), Math.min(Number(slider.max), 4000));
+      }
+      panel.querySelector("output").textContent = slider.value + " K";
+    }
+    panel.querySelector(".temperature-status").textContent = lights.length
+      ? lights.length + " 盏灯可调节" : "暂无在线且支持色温的灯（需提供 Kelvin 范围）";
+  }
+
+  async _setTemperature(kelvin) {
+    if (!Number.isFinite(kelvin) || this._temperatureBusy) return;
+    const lights = this._temperatureLights();
+    if (!lights.length) { this._paintTemperature(); return; }
+    const panel = this.shadowRoot.querySelector(".temperature-panel");
+    this._temperatureValue = kelvin;
+    this._temperatureBusy = true;
+    panel.querySelector("input").disabled = true;
+    const status = panel.querySelector(".temperature-status");
+    status.textContent = "正在调节…";
+    const results = await Promise.allSettled(lights.map(async light => {
+      await this._hass.callService("light", "turn_on", {
+        entity_id: light.id, color_temp_kelvin: Math.round(Math.max(light.min, Math.min(light.max, kelvin))),
+      });
+    }));
+    this._temperatureBusy = false;
+    this._paintTemperature();
+    const failed = results.filter(r => r.status === "rejected").length;
+    status.textContent = failed ? "调节失败 " + failed + " 盏，成功发送 " + (lights.length - failed) + " 盏"
+      : "已向 " + lights.length + " 盏灯发送 " + kelvin + " K 调节指令";
   }
 
   _buildDevices() {
@@ -852,6 +929,7 @@ class PolyHome3D extends HTMLElement {
   }
 
   _applyStates() {
+    this._paintTemperature();
     if (!this._hass || !this._model) return;
     const cfg = this._config;
     const st = (id) => (this._hass.states[id] || {}).state;
