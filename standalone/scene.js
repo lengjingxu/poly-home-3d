@@ -8,10 +8,12 @@ import {SSAOPass} from 'three/addons/postprocessing/SSAOPass.js';
 import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 import {makeTextures} from './textures.js';
 import {Reflector} from 'three/addons/objects/Reflector.js';
+import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
+import {createLighting} from './lighting.js';
 const scene=new T.Scene();scene.background=new T.Color('#e1dfd8');
 const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.toneMappingExposure=.93;renderer.toneMapping=T.ACESFilmicToneMapping;document.querySelector('#view').append(renderer.domElement);
-const camera=new T.PerspectiveCamera(36,1,.1,100),controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=Math.PI/2-.03;controls.minDistance=1.5;controls.maxDistance=60;
-scene.add(new T.HemisphereLight(0xffffff,0xb3b8c0,.48));const sun=new T.DirectionalLight(0xffedd8,2.8);sun.position.set(-6,11,7);sun.castShadow=true;sun.shadow.mapSize.set(3072,3072);Object.assign(sun.shadow.camera,{left:-12,right:12,top:12,bottom:-12});sun.shadow.bias=-.0002;sun.shadow.normalBias=.012;sun.shadow.radius=3;scene.add(sun);
+const camera=new T.PerspectiveCamera(36,1,.1,100),controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.12;controls.maxPolarAngle=Math.PI/2-.03;controls.minDistance=1.5;controls.maxDistance=60;
+const sky=new T.HemisphereLight(0xffffff,0x899ab6,.48);scene.add(sky);const sun=new T.DirectionalLight(0xffedd8,2.8);sun.position.set(-6,11,7);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-9,right:9,top:9,bottom:-9,near:.1,far:35});sun.shadow.bias=-.0002;sun.shadow.normalBias=.012;sun.shadow.radius=3;scene.add(sun);
 const pmrem=new T.PMREMGenerator(renderer),studio=new RoomEnvironment();
 const environment=pmrem.fromScene(studio,.04);scene.environment=environment.texture;scene.environmentIntensity=.55;studio.dispose();pmrem.dispose();
 const fill=new T.DirectionalLight(0xd6e2ff,.65);fill.position.set(8,7,-6);scene.add(fill);
@@ -162,9 +164,11 @@ const faucet=new T.Mesh(new T.TubeGeometry(faucetCurve,24,.012,10,false),chrome)
 cyl(833,335,.025,.008,chrome,.916);
 // Four planar mirrors reflect the current viewpoint. Other mirror planes are hidden
 // during each capture to bound the cost and avoid recursive mirror rendering.
+for(const mesh of picks){if(mesh.material===mirror){mesh.visible=false;mesh.castShadow=false;mesh.receiveShadow=false;}}
 const mirrors=[];
 for(const [x,z0,z1,bottom,height,east] of [[482.1,345.5,541.5,.1,2.45,true],[579.1,345.5,465.5,.1,2.45,false],[1171.1,159,268,0,2.6,true],[1274.7,157,407,.08,2.48,false]]){
-  const reflection=new Reflector(new T.PlaneGeometry((z1-z0)/84.4,height),{color:0xaaaaaa,textureWidth:512,textureHeight:512,clipBias:.002,multisample:2});
+  const reflection=new Reflector(new T.PlaneGeometry((z1-z0)/84.4,height),{color:0xaaaaaa,textureWidth:512,textureHeight:512,clipBias:0,multisample:2});
+  reflection.material.fragmentShader=reflection.material.fragmentShader.replace('vec4 base = texture2DProj( tDiffuse, vUv );','vec4 base = texture2DProj( tDiffuse, vUv ); base.rgb = clamp(base.rgb, vec3(0.0), vec3(1.05));');
   reflection.position.set(X(x),bottom+height/2,Z((z0+z1)/2));reflection.rotation.y=east?Math.PI/2:-Math.PI/2;
   reflection.userData.name='银色镜面 · 实时平面反射';picks.push(reflection);furniture.add(reflection);mirrors.push(reflection);
   const capture=reflection.onBeforeRender;
@@ -175,28 +179,86 @@ for(const [x,z0,z1,bottom,height,east] of [[482.1,345.5,541.5,.1,2.45,true],[579
     try{capture(renderer,scene,camera);}finally{mirrors.forEach((m,i)=>m.visible=visibility[i]);}
   };
 }
+const ceiling=new T.Group();home.add(ceiling);ceiling.visible=false;
+for(const [a,b,c,d] of [[248,270,1319,980],[1152,142,1319,282],[890,980,1319,1054]])rect(a,b,c,d,.08,plaster,CEILING,ceiling);
+let interior=false,savedFullHeight=false;
 const target=new T.WebGLRenderTarget(1,1,{type:T.HalfFloatType,samples:4});
 const composer=new EffectComposer(renderer,target);composer.addPass(new RenderPass(scene,camera));
-const ao=new SSAOPass(scene,camera,1,1,16);ao.kernelRadius=.32;ao.minDistance=.001;ao.maxDistance=.018;composer.addPass(ao);composer.addPass(new OutputPass());
+const ao=new SSAOPass(scene,camera,1,1,16);ao.kernelRadius=.32;ao.minDistance=.001;ao.maxDistance=.018;composer.addPass(ao);
+const bloom=new UnrealBloomPass(new T.Vector2(1,1),.25,.45,1.15);composer.addPass(bloom);composer.addPass(new OutputPass());
+const lighting=createLighting({scene,home,ceiling,renderer,sun,sky,fill,ground,bloom,X,Z});
+renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
 // Transparent glass must not occlude the AO normal/depth pass.
 const override=ao.overrideVisibility.bind(ao);ao.overrideVisibility=()=>{override();scene.traverse(o=>{if(o.isMesh&&o.material?.transparent)o.visible=false;});};
-let dirty=true,renderCount=0;controls.addEventListener('change',()=>dirty=true);
-function refreshReflections(){dirty=true;}
+let dirty=true,renderCount=0,cameraMove=null;
+const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
+function moveCamera(position,target,animate=true){controls.autoRotate=false;document.querySelector('#tour').textContent='镜头巡游';document.querySelector('#tour').setAttribute('aria-pressed','false');
+  if(!animate||reducedMotion.matches){camera.position.copy(position);controls.target.copy(target);controls.update();dirty=true;cameraMove=null;return;}
+  cameraMove={start:performance.now(),from:camera.position.clone(),to:position.clone(),targetFrom:controls.target.clone(),targetTo:target.clone()};dirty=true;
+}
+controls.addEventListener('start',()=>cameraMove=null);
+controls.addEventListener('change',()=>dirty=true);
+function refreshReflections(){renderer.shadowMap.needsUpdate=true;dirty=true;}
 function renderFrame(){composer.render();renderCount++;dirty=false;const w=renderer.domElement.clientWidth,h=renderer.domElement.clientHeight;for(const el of labelLayer.children){const p=el.anchor.clone().project(camera);el.style.left=(p.x*.5+.5)*w+'px';el.style.top=(-p.y*.5+.5)*h+'px';el.style.display=(p.z>1||p.z< -1||Math.abs(p.x)>1||Math.abs(p.y)>1||(labelFocus&&el.textContent!==labelFocus))?'none':'';}}
 const rooms=[['主卧',378,788,'横向轴线 3400 mm'],['衣帽间',527,436,'横向轴线 2700 mm'],['主卫',344,455,'横向轴线 1800 mm'],['公卫',720,454,'横向轴线 1800 mm'],['次卧',681,776,'横向轴线 2900 mm'],['书房',895,814,'横向轴线 2300 mm'],['客厅',1160,820,'右侧横向轴线 3900 mm'],['餐厨',1126,558,'开放式客餐厨'],['玄关',1229,261,'右上入户，薄柜靠右'],['阳台',1085,1006,'外挑阳台，家政区靠右']];
-let labelFocus=null;const labelLayer=document.querySelector('#labels');for(const [name,x,y,desc]of rooms){const el=document.createElement('button');el.className='label';el.textContent=name;el.onclick=()=>{labelFocus=name;document.querySelector('#detail').textContent=name+' · '+desc;controls.target.set(X(x),0,Z(y));camera.position.set(X(x)+3,7,Z(y)+6);};labelLayer.append(el);el.anchor=new T.Vector3(X(x),.14,Z(y));}
-function reset(top=false){labelFocus=null;controls.target.set(0,0,.2);camera.position.set(top?0:-12,top?24:16,top?.21:17);controls.update();}reset();
+let labelFocus=null;const labelLayer=document.querySelector('#labels');for(const [name,x,y,desc]of rooms){const el=document.createElement('button');el.className='label';el.textContent=name;el.onclick=()=>{leaveInterior();labelFocus=name;document.querySelector('#detail').textContent=name+' · '+desc;moveCamera(new T.Vector3(X(x)+3,7,Z(y)+6),new T.Vector3(X(x),0,Z(y)));};labelLayer.append(el);el.anchor=new T.Vector3(X(x),.14,Z(y));}
+function reset(top=false,animate=true){leaveInterior();labelFocus=null;moveCamera(new T.Vector3(top?0:-12,top?24:16,top?.21:17),new T.Vector3(0,0,.2),animate);}reset(false,false);
 for(const b of document.querySelectorAll('[data-view]'))b.onclick=()=>{reset(b.dataset.view==='top');document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x===b));};
 document.querySelector('#walls').onchange=e=>{walls.visible=e.target.checked;refreshReflections();};document.querySelector('#furniture').onchange=e=>{furniture.visible=e.target.checked;refreshReflections();};
-document.querySelector('#full-height').onchange=e=>{walls.scale.y=e.target.checked?1:1.15/CEILING;refreshReflections();};document.querySelector('#names').onchange=e=>labelLayer.hidden=!e.target.checked;
+document.querySelector('#full-height').onchange=e=>{const full=e.target.checked;leaveInterior();e.target.checked=full;walls.scale.y=full?1:1.15/CEILING;refreshReflections();};document.querySelector('#names').onchange=e=>labelLayer.hidden=!e.target.checked;
 document.querySelector('#save').onclick=()=>{renderFrame();const a=document.createElement('a');a.download='户型-3D.png';a.href=renderer.domElement.toDataURL();a.click();};
-const ray=new T.Raycaster(),pointer=new T.Vector2();let down;renderer.domElement.addEventListener('pointerdown',e=>down=[e.clientX,e.clientY]);renderer.domElement.addEventListener('pointerup',e=>{if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;const r=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hit=furniture.visible?ray.intersectObjects(picks)[0]:null;if(hit)document.querySelector('#detail').textContent=hit.object.userData.name;});
-function resize(){const v=document.querySelector('#view');renderer.setSize(v.clientWidth,v.clientHeight);camera.aspect=v.clientWidth/v.clientHeight;camera.fov=camera.aspect<1?T.MathUtils.radToDeg(2*Math.atan(Math.tan(T.MathUtils.degToRad(18))/camera.aspect)):36;camera.updateProjectionMatrix();composer.setSize(v.clientWidth,v.clientHeight);dirty=true;}addEventListener('resize',resize);resize();
-renderer.setAnimationLoop(()=>{controls.update();if(dirty)renderFrame();});
-window.floorplan={scene,camera,controls,renderer,composer,ao,mirrors,rooms,reset,walls,furniture,renderFrame,get renderCount(){return renderCount;}};document.querySelector('#status').textContent='离线模型已就绪';
+const ray=new T.Raycaster(),pointer=new T.Vector2();let down;renderer.domElement.addEventListener('pointerdown',e=>down=[e.clientX,e.clientY]);renderer.domElement.addEventListener('pointerup',e=>{if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;const r=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hit=furniture.visible?ray.intersectObjects(picks.filter(o=>o.visible))[0]:null;if(hit)document.querySelector('#detail').textContent=hit.object.userData.name;});
+function resize(){const v=document.querySelector('#view');renderer.setSize(v.clientWidth,v.clientHeight);camera.aspect=v.clientWidth/v.clientHeight;const baseFov=interior?62:36;camera.fov=camera.aspect<1?T.MathUtils.radToDeg(2*Math.atan(Math.tan(T.MathUtils.degToRad(baseFov/2))/camera.aspect)):baseFov;camera.updateProjectionMatrix();composer.setSize(v.clientWidth,v.clientHeight);dirty=true;}addEventListener('resize',resize);resize();
+let lastFrame=performance.now();
+renderer.setAnimationLoop(now=>{
+  const delta=Math.min((now-lastFrame)/1000,.05);lastFrame=now;
+  if(cameraMove){
+    const t=Math.min((now-cameraMove.start)/850,1),ease=t*t*(3-2*t);
+    camera.position.lerpVectors(cameraMove.from,cameraMove.to,ease);controls.target.lerpVectors(cameraMove.targetFrom,cameraMove.targetTo,ease);dirty=true;
+    if(t===1)cameraMove=null;
+  }
+  controls.update(delta);if(dirty)renderFrame();
+});
+window.floorplan={scene,camera,controls,renderer,composer,ao,bloom,lighting,mirrors,ceiling,rooms,reset,walls,furniture,renderFrame,get renderCount(){return renderCount;},get moving(){return !!cameraMove;}};document.querySelector('#status').textContent='实时光照 · 本地效果预览';
 const closeViews={living:[1120,780,-3.8,5,5.7],wardrobe:[530,420,0,3.7,2.9],entry:[1220,250,-.3,3.6,3.2]};
 for(const button of document.querySelectorAll('[data-focus]'))button.onclick=()=>{
-  labelFocus={living:'客厅',wardrobe:'衣帽间',entry:'玄关'}[button.dataset.focus];const [x,z,dx,h,dz]=closeViews[button.dataset.focus];controls.target.set(X(x),.45,Z(z));camera.position.set(X(x)+dx,h,Z(z)+dz);controls.update();
+  leaveInterior();labelFocus={living:'客厅',wardrobe:'衣帽间',entry:'玄关'}[button.dataset.focus];const [x,z,dx,h,dz]=closeViews[button.dataset.focus];moveCamera(new T.Vector3(X(x)+dx,h,Z(z)+dz),new T.Vector3(X(x),.45,Z(z)));
   document.querySelector('#detail').textContent=button.textContent+' · 拖动查看材质与细节';
+  document.querySelectorAll('[data-view]').forEach(b=>b.classList.remove('active'));
+};
+
+function chooseLighting(mode){
+  lighting.setMode(mode);dirty=true;
+  document.querySelectorAll('[data-lighting]').forEach(b=>{b.classList.toggle('active',b.dataset.lighting===mode);b.setAttribute('aria-pressed',String(b.dataset.lighting===mode));});
+}
+for(const button of document.querySelectorAll('[data-lighting]'))button.onclick=()=>chooseLighting(button.dataset.lighting);
+document.querySelector('#indoor').onchange=e=>{lighting.setEnabled(e.target.checked);dirty=true;};
+document.querySelector('#exposure').oninput=e=>{lighting.setExposure(Number(e.target.value));document.querySelector('#exposure-value').textContent=Number(e.target.value).toFixed(2);dirty=true;};
+document.querySelector('#tour').onclick=()=>{
+  controls.autoRotate=!controls.autoRotate;controls.autoRotateSpeed=.45;if(!controls.autoRotate){controls.enableDamping=false;controls.update();controls.enableDamping=true;}
+  document.querySelector('#tour').textContent=controls.autoRotate?'停止巡游':'镜头巡游';document.querySelector('#tour').setAttribute('aria-pressed',String(controls.autoRotate));dirty=true;
+};
+document.querySelector('#fullscreen').onclick=async()=>{
+  try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}
+  catch(error){document.querySelector('#detail').textContent='浏览器未能开启全屏：'+error.message;}
+};
+addEventListener('keydown',event=>{
+  if(event.target.matches('input,button,select,textarea')||event.metaKey||event.ctrlKey||event.altKey)return;
+  const modes={'1':'day','2':'dusk','3':'night'};
+  if(modes[event.key])chooseLighting(modes[event.key]);
+  if(event.key.toLowerCase()==='r')reset();
+});
+chooseLighting('dusk');
+
+function leaveInterior(){
+  if(!interior)return;
+  interior=false;ceiling.visible=false;document.querySelector('#full-height').checked=savedFullHeight;walls.scale.y=savedFullHeight?1:1.15/CEILING;
+  resize();refreshReflections();
+}
+document.querySelector('#interior').onclick=()=>{
+  if(!interior)savedFullHeight=document.querySelector('#full-height').checked;interior=true;ceiling.visible=true;walls.visible=true;walls.scale.y=1;document.querySelector('#full-height').checked=true;document.querySelector('#walls').checked=true;
+  labelFocus='客厅';controls.autoRotate=false;document.querySelector('#tour').textContent='镜头巡游';document.querySelector('#tour').setAttribute('aria-pressed','false');
+  resize();refreshReflections();moveCamera(new T.Vector3(X(1088),1.65,Z(868)),new T.Vector3(X(1230),1.15,Z(744)));
+  document.querySelector('#detail').textContent='室内视角 · 拖动环顾，点击立体返回全屋';
   document.querySelectorAll('[data-view]').forEach(b=>b.classList.remove('active'));
 };
