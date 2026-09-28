@@ -53,7 +53,7 @@ floor(264,282,417,551,stone,.004);floor(644,282,795,551,stone,.004);floor(795,28
 floor(990,660,1319,922,livingFloor,.004);
 const ground=new T.Mesh(new T.PlaneGeometry(200,200),mat('#e1dfd8'));ground.rotation.x=-Math.PI/2;ground.position.y=-.18;ground.receiveShadow=true;scene.add(ground);
 // Dressing/primary bedroom and study/living room connections have no walls or doors. Exterior and interior walls are split at the drawing's door/window openings.
-[[248,270,264,654],[248,710,264,922],[248,970,805,984],[264,270,292,286],[391,270,427,286],[622,270,654,286],[744,270,844,286],[844,270,1167,286],[1152,142,1168,282],[1152,134,1180,150],[1273,134,1320,150],[1304,142,1320,922],[264,908,314,924],[527,908,580,924],[753,908,806,924],[806,908,892,924],[980,908,998,924],[1250,908,1320,924],[884,922,900,1054],[1304,922,1320,1054],[407,286,424,552],[634,286,651,552],[784,286,801,552],[264,545,329,559],[398,545,424,559],[642,545,665,559],[730,545,801,559],[544,650,560,910],[784,650,801,705],[784,744,801,910],[560,649,707,665]].forEach(v=>wall(...v));
+[[248,270,264,654],[248,710,264,922],[248,970,805,984],[264,270,292,286],[391,270,427,286],[622,270,654,286],[744,270,844,286],[844,270,864,286],[994,270,1167,286],[1152,142,1168,282],[1152,134,1180,150],[1273,134,1320,150],[1304,142,1320,922],[264,908,314,924],[527,908,580,924],[753,908,806,924],[806,908,892,924],[980,908,998,924],[1250,908,1320,924],[884,922,900,1054],[1304,922,1320,1054],[407,286,424,552],[634,286,651,552],[784,286,801,552],[264,545,329,559],[398,545,424,559],[642,545,665,559],[730,545,801,559],[544,650,560,910],[784,650,801,705],[784,744,801,910],[560,649,707,665]].forEach(v=>wall(...v));
 function windowLine(a,b,c,d,sill=.9,head=2.35,isWindow=true){
   const height=head-sill;
   const pane=rect(a,b,c,d,height,glass,sill,home);
@@ -67,6 +67,9 @@ function windowLine(a,b,c,d,sill=.9,head=2.35,isWindow=true){
   }
 }
 [[424,274,630,280],[280,958,528,964],[572,958,774,964],[250,657,257,708],[808,909,980,916],[292,275,390,280],[653,275,744,280]].forEach(v=>windowLine(...v));
+// Kitchen window on the refrigerator-side wall, above the sink.
+windowLine(866,274,992,280,1.05,2.35);
+rect(864,270,994,286,CEILING-2.35,plaster,2.35,home);
 // The interior balcony glazing is a floor-level opening, not a normal window.
 windowLine(999,910,1248,917,.02,CEILING,false);
 // Balcony exterior: one uninterrupted floor-to-ceiling pane; no intermediate mullions.
@@ -113,9 +116,9 @@ for(const [a,c] of [[1008,1053.8],[1055.2,1101]]){
 rect(1008,353,1101,354,.018,dark,.986);
 rect(1008,352,1101,353.5,.34,fridgeWhite,2.23);
 cabinet(1107,295,1172,352,'厨房 · 黑色零食柜',1.4);
-cabinet(1277,154,1310,409,'玄关 · 到顶镜面薄柜',1.12,black,'west');
+cabinet(1277,154,1310,409,'玄关 · 到顶黑色柜',1.12,black,'west');
 rect(1169,159,1171,268,CEILING,mirror,0,furniture,'玄关 · 银色镜面墙');
-rect(1274.8,157,1275.2,407,CEILING-.12,mirror,.08,furniture,'玄关 · 银色镜面墙');
+
 for(let y=169;y<265;y+=32)rect(1168.8,y,1171.3,y+.5,CEILING,chrome);
 // A projecting silver frame, open illuminated niche and six lower drawers.
 const sideboardSilver=new T.MeshStandardMaterial({color:'#cbc9c3',metalness:.48,roughness:.34});
@@ -137,7 +140,33 @@ const bottle=mat('#343d28');for(const z of [459,471]){cyl(1290,z,.028,.14,bottle
 rect(1273,566,1296,591,.28,wine,1.215,furniture,'餐边柜 · 红色咖啡机示意');
 rect(1268,569,1274,587,.025,chrome,1.26);cyl(1267,578,.035,.045,linen,1.285);
 
-cabinet(807,294,859,548,'厨房 · 黑色操作台',.86,black,'east');rect(806,293,860,549,.04,silver,.86);rect(813,319,852,348,.025,dark,.88);rect(816,322,849,345,.026,mat('#aab7b7'),.889);cyl(848,318,.025,.22,dark,.88);
+// L-shaped worktop: cooking on the west wall, washing under the north window.
+cabinet(807,294,859,548,'厨房 · 黑色地柜',.86,black,'east');
+rect(806,293,860,549,.04,silver,.86);
+cabinet(859,294,997,352,'厨房 · 窗下水槽柜',.86,black);
+for(const r of [[859,293,881,353],[931,293,997,353],[881,293,931,306],[881,340,931,353]])rect(...r,.04,silver,.86);
+rect(881,306,931,340,.01,silver,.858,furniture,'厨房 · 窗下洗手台水槽');
+for(const r of [[881,306,883,340],[929,306,931,340],[881,306,931,308],[881,338,931,340]])rect(...r,.05,silver,.864);
+cyl(905,323,.023,.004,dark,.87);
+// White wall cabinets meet the assumed ceiling and leave a clear hood opening.
+for(const [z0,z1] of [[294,398],[476,548]]){
+  rect(807,z0,842,z1,1,fridgeWhite,1.6,furniture,'厨房 · 白色吊柜');
+  const n=Math.ceil((z1-z0)/43);
+  for(let i=0;i<n;i++)rect(841.8,z0+(z1-z0)*i/n+.4,843,z0+(z1-z0)*(i+1)/n-.4,.94,fridgeWhite,1.63);
+}
+rect(807,404,861,472,.09,fridgeSilver,1.60,furniture,'厨房 · 油烟机');
+rect(807,420,828,457,.85,fridgeSilver,1.69);
+rect(849,406,861,470,.05,black,1.62);
+rect(811,410,855,466,.014,black,.906,furniture,'厨房 · 灶台');
+for(const [x,z] of [[822,423],[844,423],[822,453],[844,453]]){
+  const ring=new T.Mesh(new T.TorusGeometry(.07,.007,8,24),dark);ring.rotation.x=Math.PI/2;ring.position.set(X(x),.929,Z(z));furniture.add(ring);
+  rect(x-7,z-.6,x+7,z+.6,.008,chrome,.933);rect(x-.6,z-7,x+.6,z+7,.008,chrome,.933);
+}
+// Dishwasher front at the right-hand end of the sink run, adjacent to the fridge.
+rect(944,352.5,995,354.5,.70,fridgeSilver,.10,furniture,'厨房 · 洗碗机');
+rect(944,354.5,995,355,.065,black,.735);
+rect(953,355,986,356,.018,chrome,.703);
+rect(980,355,990,355.5,.022,dark,.761);
 rect(922,448,1019,536,.9,wine,0,furniture,'厨房 · 磨砂酒红岛台');rect(919,445,1022,539,.04,wine,.9);rect(1022,454,1124,529,.05,wood,.76,furniture,'餐桌 · 木纹台面（参考图）');for(const z of [464,519])tube([1113,.02,z],[1113,.76,z],.021);
 for(const [x,y] of [[1040,440],[1091,440],[1040,543],[1091,543]]){
   soft(x-15,y-15,x+15,y+15,.065,leather,.43,'餐厅 · 黑皮金属餐椅');
@@ -208,14 +237,13 @@ const rim=new T.Mesh(new T.TorusGeometry(.213,.023,10,40),chrome);rim.rotation.y
 const hatch=new T.Mesh(new T.CircleGeometry(.177,40),new T.MeshPhysicalMaterial({color:'#304048',metalness:.35,roughness:.17,clearcoat:1}));hatch.rotation.y=-Math.PI/2;hatch.position.copy(drum.position);hatch.position.x-=.025;furniture.add(hatch);
 rect(1246.5,942,1247.2,979,.075,black,.69);
 cabinet(1251,995,1291,1039,'阳台 · 扫地机基站',.45,stone);cyl(1266,1025,.16,.09,dark);
-const faucetCurve=new T.CatmullRomCurve3([new T.Vector3(X(848),.9,Z(318)),new T.Vector3(X(848),1.14,Z(318)),new T.Vector3(X(837),1.2,Z(318)),new T.Vector3(X(829),1.14,Z(328))]);
+const faucetCurve=new T.CatmullRomCurve3([new T.Vector3(X(924),.9,Z(301)),new T.Vector3(X(924),1.15,Z(301)),new T.Vector3(X(911),1.20,Z(302)),new T.Vector3(X(905),1.13,Z(313))]);
 const faucet=new T.Mesh(new T.TubeGeometry(faucetCurve,24,.012,10,false),chrome);faucet.castShadow=true;furniture.add(faucet);
-cyl(833,335,.025,.008,chrome,.916);
-// Four planar mirrors reflect the current viewpoint. Other mirror planes are hidden
+// Three planar mirrors reflect the current viewpoint. Other mirror planes are hidden
 // during each capture to bound the cost and avoid recursive mirror rendering.
 for(const mesh of picks){if(mesh.material===mirror){mesh.visible=false;mesh.castShadow=false;mesh.receiveShadow=false;}}
 const mirrors=[];
-for(const [x,z0,z1,bottom,height,east] of [[482.1,345.5,541.5,.1,2.45,true],[579.1,345.5,465.5,.1,2.45,false],[1171.1,159,268,0,2.6,true],[1274.7,157,407,.08,2.48,false]]){
+for(const [x,z0,z1,bottom,height,east] of [[482.1,345.5,541.5,.1,2.45,true],[579.1,345.5,465.5,.1,2.45,false],[1171.1,159,268,0,2.6,true]]){
   const reflection=new Reflector(new T.PlaneGeometry((z1-z0)/84.4,height),{color:0xaaaaaa,textureWidth:512,textureHeight:512,clipBias:0,multisample:2});
   reflection.material.fragmentShader=reflection.material.fragmentShader.replace('vec4 base = texture2DProj( tDiffuse, vUv );','vec4 base = texture2DProj( tDiffuse, vUv ); base.rgb = clamp(base.rgb, vec3(0.0), vec3(1.05));');
   reflection.position.set(X(x),bottom+height/2,Z((z0+z1)/2));reflection.rotation.y=east?Math.PI/2:-Math.PI/2;
@@ -269,9 +297,9 @@ renderer.setAnimationLoop(now=>{
   controls.update(delta);if(dirty)renderFrame();
 });
 window.floorplan={scene,camera,controls,renderer,composer,ao,bloom,lighting,mirrors,ceiling,rooms,reset,walls,furniture,renderFrame,get renderCount(){return renderCount;},get moving(){return !!cameraMove;}};document.querySelector('#status').textContent='实时光照 · 本地效果预览';
-const closeViews={living:[1120,780,-3.8,5,5.7],wardrobe:[530,420,0,3.7,2.9],entry:[1220,250,-.3,3.6,3.2]};
+const closeViews={living:[1120,780,-3.8,5,5.7],wardrobe:[530,420,0,3.7,2.9],entry:[1220,250,-.3,3.6,3.2],kitchen:[925,370,2.4,4.8,4.8]};
 for(const button of document.querySelectorAll('[data-focus]'))button.onclick=()=>{
-  leaveInterior();labelFocus={living:'客厅',wardrobe:'衣帽间',entry:'玄关'}[button.dataset.focus];const [x,z,dx,h,dz]=closeViews[button.dataset.focus];moveCamera(new T.Vector3(X(x)+dx,h,Z(z)+dz),new T.Vector3(X(x),.45,Z(z)));
+  leaveInterior();labelFocus={living:'客厅',wardrobe:'衣帽间',entry:'玄关',kitchen:'餐厨'}[button.dataset.focus];const [x,z,dx,h,dz]=closeViews[button.dataset.focus];moveCamera(new T.Vector3(X(x)+dx,h,Z(z)+dz),new T.Vector3(X(x),button.dataset.focus==='kitchen'?1.15:.45,Z(z)));
   document.querySelector('#detail').textContent=button.textContent+' · 拖动查看材质与细节';
   document.querySelectorAll('[data-view]').forEach(b=>b.classList.remove('active'));
 };

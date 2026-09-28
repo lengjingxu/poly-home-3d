@@ -24,7 +24,9 @@ export function createLighting({scene,home,ceiling,renderer,sun,sky,fill,ground,
   }
   strip(863,748,.025,1.94,1.43,4.5);
   strip(1259,521,.025,1.82,1.864,4.5);
-  strip(855,421,.025,2.65,.89,3.5);
+  strip(841,346,.025,1.18,1.585,3);
+  strip(841,512,.025,.80,1.585,3);
+  strip(852,438,.025,.64,1.592,2);
   strip(1070,491,1.72,.038,2.08,4);
   const bar=new T.Mesh(new T.CylinderGeometry(.026,.026,1.8,20),new T.MeshStandardMaterial({color:0x665a43,metalness:.85,roughness:.25}));
   bar.rotation.z=Math.PI/2;bar.position.set(X(1070),2.12,Z(491));home.add(bar);
