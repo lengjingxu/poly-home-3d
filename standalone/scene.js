@@ -53,7 +53,7 @@ floor(264,282,417,551,stone,.004);floor(644,282,795,551,stone,.004);floor(795,28
 floor(990,660,1319,922,livingFloor,.004);
 const ground=new T.Mesh(new T.PlaneGeometry(200,200),mat('#e1dfd8'));ground.rotation.x=-Math.PI/2;ground.position.y=-.18;ground.receiveShadow=true;scene.add(ground);
 // Dressing/primary bedroom and study/living room connections have no walls or doors. Exterior and interior walls are split at the drawing's door/window openings.
-[[248,270,264,654],[248,710,264,922],[248,970,805,984],[264,270,292,286],[391,270,427,286],[622,270,654,286],[744,270,844,286],[844,270,864,286],[994,270,1167,286],[1152,142,1168,282],[1152,134,1180,150],[1273,134,1320,150],[1304,142,1320,922],[264,908,314,924],[527,908,580,924],[753,908,806,924],[806,908,892,924],[980,908,998,924],[1250,908,1320,924],[884,922,900,1054],[1304,922,1320,1054],[407,286,424,552],[634,286,651,552],[784,286,801,552],[264,545,329,559],[398,545,424,559],[642,545,665,559],[730,545,801,559],[544,650,560,910],[784,650,801,705],[784,744,801,910],[560,649,707,665]].forEach(v=>wall(...v));
+[[248,270,264,654],[248,710,264,922],[264,270,292,286],[391,270,427,286],[622,270,654,286],[744,270,844,286],[844,270,864,286],[994,270,1167,286],[1152,142,1168,282],[1152,134,1180,150],[1273,134,1320,150],[1304,142,1320,922],[264,908,314,924],[527,908,580,924],[753,908,806,924],[806,908,892,924],[980,908,998,924],[1250,908,1320,924],[407,286,424,552],[634,286,651,552],[784,286,801,552],[264,545,329,559],[398,545,424,559],[642,545,665,559],[730,545,801,559],[544,650,560,910],[784,650,801,705],[784,744,801,910],[560,649,707,665]].forEach(v=>wall(...v));
 function windowLine(a,b,c,d,sill=.9,head=2.35,isWindow=true){
   const height=head-sill;
   const pane=rect(a,b,c,d,height,glass,sill,home);
@@ -70,13 +70,17 @@ function windowLine(a,b,c,d,sill=.9,head=2.35,isWindow=true){
 // Kitchen window on the refrigerator-side wall, above the sink.
 windowLine(866,274,992,280,1.05,2.35);
 rect(864,270,994,286,CEILING-2.35,plaster,2.35,home);
-// The interior balcony glazing is a floor-level opening, not a normal window.
-windowLine(999,910,1248,917,.02,CEILING,false);
-// Balcony exterior: one uninterrupted floor-to-ceiling pane; no intermediate mullions.
-rect(899,1046.5,1303,1047.5,CEILING-.04,glass,.02,home,'阳台 · 一体全景玻璃');
+// Living room opens directly onto the balcony. Three exterior glass faces,
+// with one uninterrupted front pane and perimeter frames only.
+rect(899,1046.5,1303,1047.5,CEILING-.04,glass,.02,home,'阳台 · 正面一体全景玻璃');
 rect(899,1044,1303,1050,.025,dark,0,home);
 rect(899,1044,1303,1050,.025,dark,CEILING-.025,home);
-for(const x of [899,1301])rect(x,1044,x+2,1050,CEILING,dark,0,home);
+for(const [x,name] of [[899,'左侧'],[1303,'右侧']]){
+  rect(x-.5,922,x+.5,1047,CEILING-.04,glass,.02,home,'阳台 · '+name+'落地玻璃');
+  rect(x-2,922,x+2,1047,.025,dark,0,home);
+  rect(x-2,922,x+2,1047,.025,dark,CEILING-.025,home);
+  for(const z of [922,1045])rect(x-1,z,x+1,z+2,CEILING,dark,0,home);
+}
 function cabinet(a,b,c,d,name,h=1.05,m=black,face='south'){ if(h>=1.12)h=CEILING;
   rect(a,b,c,d,h-.07,m,.07,furniture,name);
   rect(a+3,b+3,c-3,d-3,.07,dark,0);
