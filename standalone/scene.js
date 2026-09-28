@@ -2,48 +2,50 @@ import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
+import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
+import {SSAOPass} from 'three/addons/postprocessing/SSAOPass.js';
+import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
+import {makeTextures} from './textures.js';
+import {Reflector} from 'three/addons/objects/Reflector.js';
 const scene=new T.Scene();scene.background=new T.Color('#e1dfd8');
-const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.toneMapping=T.ACESFilmicToneMapping;document.querySelector('#view').append(renderer.domElement);
-const camera=new T.PerspectiveCamera(36,1,.1,100),controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=Math.PI/2-.03;controls.minDistance=6;controls.maxDistance=60;
-scene.add(new T.HemisphereLight(0xffffff,0xb3b8c0,.8));const sun=new T.DirectionalLight(0xfff7e8,3.2);sun.position.set(-4,16,8);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-12,right:12,top:12,bottom:-12});sun.shadow.bias=-.0002;sun.shadow.normalBias=.025;sun.shadow.radius=3;scene.add(sun);
+const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.toneMappingExposure=.93;renderer.toneMapping=T.ACESFilmicToneMapping;document.querySelector('#view').append(renderer.domElement);
+const camera=new T.PerspectiveCamera(36,1,.1,100),controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=Math.PI/2-.03;controls.minDistance=1.5;controls.maxDistance=60;
+scene.add(new T.HemisphereLight(0xffffff,0xb3b8c0,.48));const sun=new T.DirectionalLight(0xffedd8,2.8);sun.position.set(-6,11,7);sun.castShadow=true;sun.shadow.mapSize.set(3072,3072);Object.assign(sun.shadow.camera,{left:-12,right:12,top:12,bottom:-12});sun.shadow.bias=-.0002;sun.shadow.normalBias=.012;sun.shadow.radius=3;scene.add(sun);
 const pmrem=new T.PMREMGenerator(renderer),studio=new RoomEnvironment();
-const environment=pmrem.fromScene(studio,.04);scene.environment=environment.texture;scene.environmentIntensity=.45;studio.dispose();pmrem.dispose();
-const fill=new T.DirectionalLight(0xd6e2ff,1.2);fill.position.set(8,7,-6);scene.add(fill);
+const environment=pmrem.fromScene(studio,.04);scene.environment=environment.texture;scene.environmentIntensity=.55;studio.dispose();pmrem.dispose();
+const fill=new T.DirectionalLight(0xd6e2ff,.65);fill.position.set(8,7,-6);scene.add(fill);
 const home=new T.Group(),walls=new T.Group(),furniture=new T.Group();scene.add(home);home.add(walls,furniture);const picks=[];
-// Deterministic, embedded textures: no remote images or HDR files.
-function texture(kind){
-  const canvas=document.createElement('canvas');canvas.width=canvas.height=256;
-  const context=canvas.getContext('2d'),pixels=context.createImageData(256,256);
-  for(let y=0;y<256;y++)for(let x=0;x<256;x++){
-    const noise=(Math.sin(x*127.1+y*311.7)*43758.5453)%1;
-    const grain=kind==='wood'?Math.sin(x*.45+Math.sin(y*.035)*2)*16+Math.sin(x*1.9+y*.008)*7:noise*14;
-    const value=kind==='wood'?177+grain:128+grain;
-    const i=(y*256+x)*4;pixels.data[i]=value;pixels.data[i+1]=value;pixels.data[i+2]=value;pixels.data[i+3]=255;
-  }
-  context.putImageData(pixels,0,0);const t=new T.CanvasTexture(canvas);t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(kind==='wood'?3:10,kind==='wood'?1:10);return t;
-}
-const grain=texture('wood'),micro=texture('micro');
+const textures=makeTextures(),grain=textures.oak,micro=textures.pores;
 const mat=c=>new T.MeshStandardMaterial({color:c,roughness:.72});
-const plaster=mat('#f0eee7'),wood=new T.MeshStandardMaterial({color:'#b48b62',map:grain,bumpMap:grain,bumpScale:.008,roughness:.47});
-const dark=mat('#191b1e'),black=new T.MeshStandardMaterial({color:'#202226',roughness:.32});
-const linen=new T.MeshStandardMaterial({color:'#ede9df',roughness:.95,bumpMap:micro,bumpScale:.007});
+const plaster=mat('#f0eee7'),wood=new T.MeshStandardMaterial({color:'#ffffff',map:grain,bumpMap:grain,bumpScale:.003,roughness:.46});
+const dark=mat('#191b1e'),black=new T.MeshStandardMaterial({color:'#202226',roughness:.36,bumpMap:textures.plaster,bumpScale:.0006});
+const linen=new T.MeshStandardMaterial({color:'#ede9df',roughness:.95,bumpMap:textures.weave,bumpScale:.003});
 const wine=mat('#8d292c'),stone=mat('#c8c7c2');
 const chrome=new T.MeshStandardMaterial({color:'#e7ecf2',metalness:1,roughness:.13});
-const silver=new T.MeshStandardMaterial({color:'#cbd0d8',metalness:.95,roughness:.24});
+const silver=new T.MeshStandardMaterial({color:'#cbd0d8',metalness:1,roughness:.23,roughnessMap:textures.brushed,bumpMap:textures.brushed,bumpScale:.0004});
 const mirror=new T.MeshStandardMaterial({color:'#e7ebef',metalness:1,roughness:.035});
-const leather=new T.MeshPhysicalMaterial({color:'#16181b',roughness:.37,clearcoat:.25,clearcoatRoughness:.32,bumpMap:micro,bumpScale:.003});
-const blue=new T.MeshStandardMaterial({color:'#174caf',roughness:1,bumpMap:micro,bumpScale:.018});
+const leather=new T.MeshPhysicalMaterial({color:'#101215',roughness:.43,clearcoat:.16,clearcoatRoughness:.38,bumpMap:micro,bumpScale:.0014});
+const blue=new T.MeshStandardMaterial({color:'#153b92',roughness:1,bumpMap:textures.weave,bumpScale:.007});
 const glass=new T.MeshPhysicalMaterial({color:'#b8d1d5',transparent:true,opacity:.22,roughness:.08,depthWrite:false});
+plaster.bumpMap=textures.plaster;plaster.bumpScale=.001;
+stone.bumpMap=textures.plaster;stone.bumpScale=.001;stone.roughness=.5;
+const floorWood=new T.MeshStandardMaterial({map:textures.floor,roughness:.55,bumpMap:textures.floor,bumpScale:.0018});
 // Source drawing origin (264,282); 84.4 pixels per metre. No geographic orientation inferred.
 const CEILING=2.6; /* Assumed ceiling height. */ const X=p=>(p-264)/84.4-6.25,Z=p=>(p-282)/84.4-3.7;
-function box(x,z,w,d,h,m,y=0,g=furniture,name=''){const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y+h/2,z);o.castShadow=true;o.receiveShadow=true;g.add(o);if(name){o.userData.name=name;picks.push(o);}return o;}
+function box(x,z,w,d,h,m,y=0,g=furniture,name=''){const bevel=Math.min(.008,w/5,h/5,d/5);const geometry=(g===furniture&&Math.min(w,h,d)>.04)?new RoundedBoxGeometry(w,h,d,2,bevel):new T.BoxGeometry(w,h,d);const o=new T.Mesh(geometry,m);o.position.set(x,y+h/2,z);o.castShadow=true;o.receiveShadow=true;g.add(o);if(name){o.userData.name=name;picks.push(o);}return o;}
 function rect(a,b,c,d,h,m,y=0,g=furniture,name=''){return box(X((a+c)/2),Z((b+d)/2),(c-a)/84.4,(d-b)/84.4,h,m,y,g,name);}
 function cyl(x,z,r,h,m,y=0){const o=new T.Mesh(new T.CylinderGeometry(r,r,h,32),m);o.position.set(X(x),y+h/2,Z(z));o.castShadow=true;o.receiveShadow=true;furniture.add(o);return o;}
-function wall(a,b,c,d){rect(a,b,c,d,1.15,plaster,0,walls);rect(a-1,b-1,c+1,d+1,.025,linen,1.15,walls);}
-function floor(a,b,c,d,m,y=0){rect(a,b,c,d,.13,m,y-.13,home);}
-floor(248,270,1319,980,wood);floor(1152,142,1319,282,stone);floor(890,922,1319,1054,stone,.006);
+function wall(a,b,c,d){rect(a,b,c,d,CEILING,plaster,0,walls);rect(a-1,b-1,c+1,d+1,.025,plaster,CEILING,walls);}
+walls.scale.y=1.15/CEILING;
+function floor(a,b,c,d,m,y=0){
+  const mesh=rect(a,b,c,d,.13,m,y-.13,home);
+  if(m===floorWood){const uv=mesh.geometry.attributes.uv,pos=mesh.geometry.attributes.position;
+    for(let i=0;i<pos.count;i++)uv.setXY(i,(pos.getX(i)+mesh.position.x)/4,(pos.getZ(i)+mesh.position.z)/4);
+  }
+}
+floor(248,270,1319,980,floorWood);floor(1152,142,1319,282,stone);floor(890,922,1319,1054,stone,.006);
 floor(264,282,417,551,stone,.004);floor(644,282,795,551,stone,.004);floor(795,282,1319,660,stone,.004);
-const joint=mat('#806e59');for(let py=565;py<975;py+=19)rect(264,py,790,py+.32,.002,joint,.002,home);
 const ground=new T.Mesh(new T.PlaneGeometry(200,200),mat('#e1dfd8'));ground.rotation.x=-Math.PI/2;ground.position.y=-.18;ground.receiveShadow=true;scene.add(ground);
 // Dressing/primary bedroom and study/living room connections have no walls or doors. Exterior and interior walls are split at the drawing's door/window openings.
 [[248,270,264,654],[248,710,264,922],[248,970,805,984],[264,270,292,286],[391,270,427,286],[622,270,654,286],[744,270,844,286],[844,270,1167,286],[1152,142,1168,282],[1152,134,1180,150],[1273,134,1320,150],[1304,142,1320,922],[264,908,314,924],[527,908,580,924],[753,908,806,924],[806,908,892,924],[980,908,998,924],[1250,908,1320,924],[884,922,900,1054],[1304,922,1320,1054],[407,286,424,552],[634,286,651,552],[784,286,801,552],[264,545,329,559],[398,545,424,559],[642,545,665,559],[730,545,801,559],[544,650,560,910],[784,650,801,705],[784,744,801,910],[560,649,707,665]].forEach(v=>wall(...v));
@@ -53,16 +55,15 @@ function cabinet(a,b,c,d,name,h=1.05,m=black,face='south'){ if(h>=1.12)h=CEILING
   rect(a,b,c,d,h-.07,m,.07,furniture,name);
   rect(a+3,b+3,c-3,d-3,.07,dark,0);
   const along=face==='south',span=along?c-a:d-b,count=Math.max(2,Math.round(span/43));
-  for(let i=1;i<count;i++){
-    const at=(along?a:b)+span*i/count;
-    if(along)rect(at-.45,d,at+.45,d+.5,h-.13,dark,.1);
-    else{const edge=face==='west'?a-.5:c;rect(edge,at-.45,edge+.5,at+.45,h-.13,dark,.1);}
-  }
-}
+  for(let i=0;i<count;i++){
+    const start=(along?a:b)+span*i/count+.3,end=(along?a:b)+span*(i+1)/count-.3;
+    if(along)rect(start,d-.1,end,d+1.1,h-.14,m,.1);
+    else{const edge=face==='west'?a-1.1:c-.1;rect(edge,start,edge+1.2,end,h-.14,m,.1);}
+  }}
 function mirrorFront(a,b,c,d,h,face){ h=CEILING;
   const span=d-b,count=Math.max(2,Math.round(span/44));
   for(let i=0;i<count;i++){
-    const edge=face==='west'?a-.65:c;
+    const edge=face==='west'?a-1.8:c+1.2;
     rect(edge,b+span*i/count+1.5,edge+.65,b+span*(i+1)/count-1.5,h-.15,mirror,.1,furniture,'银色镜面柜门');
   }
 }
@@ -80,13 +81,13 @@ for(let y=698;y<837;y+=39)rect(867,y,867.5,y+.55,1.08,dark,CEILING-1.12);
 cabinet(1004,295,1105,352,'厨房 · 黑色冰箱柜',1.65);cabinet(1107,295,1172,352,'厨房 · 黑色零食柜',1.4);
 cabinet(1277,154,1310,409,'玄关 · 到顶镜面薄柜',1.12,black,'west');
 rect(1169,159,1171,268,CEILING,mirror,0,furniture,'玄关 · 银色镜面墙');
-rect(1275,157,1275.4,407,CEILING-.12,mirror,.08,furniture,'玄关 · 银色镜面墙');
+rect(1274.8,157,1275.2,407,CEILING-.12,mirror,.08,furniture,'玄关 · 银色镜面墙');
 for(let y=169;y<265;y+=32)rect(1168.8,y,1171.3,y+.5,CEILING,chrome);
 cabinet(1276,418,1310,653,'餐厅 · 黑色展示柜',1.3,black,'west');
 cabinet(1256,437,1310,604,'餐厅 · 凸出银色餐边柜',.68,silver,'west');
-rect(1255,436,1311,605,.035,chrome,.75);
+rect(1255,436,1311,605,.035,chrome,.68);
 cabinet(807,294,859,548,'厨房 · 黑色操作台',.86,black,'east');rect(806,293,860,549,.04,silver,.86);rect(813,319,852,348,.025,dark,.88);rect(816,322,849,345,.026,mat('#aab7b7'),.889);cyl(848,318,.025,.22,dark,.88);
-rect(922,448,1019,536,.9,wine,0,furniture,'厨房 · 磨砂酒红岛台');rect(919,445,1022,539,.04,wine,.9);rect(1022,454,1124,529,.05,black,.76,furniture,'餐桌 · 按图示轮廓估算');
+rect(922,448,1019,536,.9,wine,0,furniture,'厨房 · 磨砂酒红岛台');rect(919,445,1022,539,.04,wine,.9);rect(1022,454,1124,529,.05,black,.76,furniture,'餐桌 · 按图示轮廓估算');for(const z of [464,519])tube([1113,.02,z],[1113,.76,z],.021);
 for(const [x,y] of [[1040,440],[1091,440],[1040,543],[1091,543]]){
   soft(x-15,y-15,x+15,y+15,.065,leather,.43,'餐厅 · 黑皮金属餐椅');
   const back=y<480?y-14:y+14;
@@ -98,13 +99,32 @@ bed(292,724,478,871,'主卧 · 床（图示轮廓估算）',true);// Wall-to-wal
 rect(560,857,784,958.28,.25,wood,0,furniture,'次卧 · 通墙榻榻米平台');
 soft(580,860,748.8,958,.2,linen,.25,'次卧 · 1200 × 2000 寝具');
 soft(590,867,642,891,.12,linen,.45);soft(677,867,730,891,.12,linen,.45);
+function duvet(a,b,c,d,y){
+  const geometry=new T.PlaneGeometry((c-a)/84.4,(d-b)/84.4,42,42),pos=geometry.attributes.position;
+  for(let i=0;i<pos.count;i++){
+    const x=pos.getX(i),z=pos.getY(i);
+    pos.setZ(i,.012*Math.sin(x*24+z*3)+.008*Math.sin(z*28+x*5));
+  }
+  geometry.computeVertexNormals();const cloth=new T.Mesh(geometry,linen);cloth.rotation.x=-Math.PI/2;cloth.position.set(X((a+c)/2),y,Z((b+d)/2));cloth.castShadow=true;cloth.receiveShadow=true;furniture.add(cloth);
+}
+duvet(329,730,472,865,.485);duvet(585,898,744,951,.47);
 // LC3-inspired rounded leather cushions and external tubular steel frame.
 rect(1000,695,1246,887,.027,blue,0,furniture,'客厅 · 蓝色地毯');
+const binding=new T.MeshStandardMaterial({color:'#1b3270',roughness:1});
+for(const r of [[1000,695,1246,696.2],[1000,885.8,1246,887],[1000,695,1001.2,887],[1244.8,695,1246,887]])rect(...r,.029,binding);
 function soft(a,b,c,d,h,m,y,name){
   const w=(c-a)/84.4,depth=(d-b)/84.4;
   const mesh=new T.Mesh(new RoundedBoxGeometry(w,h,depth,3,Math.min(.065,h/3)),m);
   mesh.position.set(X((a+c)/2),y+h/2,Z((b+d)/2));mesh.castShadow=true;mesh.receiveShadow=true;furniture.add(mesh);
-  if(name){mesh.userData.name=name;picks.push(mesh);}return mesh;
+  if(name){mesh.userData.name=name;picks.push(mesh);}
+  if(m===leather&&h>.1){
+    const radius=.045,points=[];
+    for(const [cx,cz,start] of [[w/2-radius,depth/2-radius,0],[-w/2+radius,depth/2-radius,90],[-w/2+radius,-depth/2+radius,180],[w/2-radius,-depth/2+radius,270]]){
+      for(let step=0;step<=8;step++){const angle=(start+step*90/8)*Math.PI/180;points.push(new T.Vector3(cx+Math.cos(angle)*radius,h/2-.026,cz+Math.sin(angle)*radius));}
+    }
+    const seam=new T.LineLoop(new T.BufferGeometry().setFromPoints(points),new T.LineBasicMaterial({color:'#47484a'}));mesh.add(seam);
+  }
+  return mesh;
 }
 function tube(a,b,r=.017){
   const start=new T.Vector3(X(a[0]),a[1],Z(a[2])),end=new T.Vector3(X(b[0]),b[1],Z(b[2]));
@@ -129,31 +149,54 @@ soft(1102,639,1177,657,.52,leather,.35);
 for(const x of [1100,1179]){tube([x,.13,642],[x,.13,705]);tube([x,.13,648],[x,.75,648]);tube([x,.13,701],[x,.54,701]);tube([x,.54,648],[x,.54,701]);}
 rect(1105,740,1184,812,.055,stone,.35,furniture,'客厅 · 茶几');rect(1136,764,1152,785,.35,dark);cabinet(1275,664,1310,901,'客厅 · 电视墙',.35,dark);rect(1300,719,1305,855,.85,mat('#202a2b'),.5,furniture,'电视');
 rect(812,845,860,900,.06,wood,0,furniture,'书房 · 猫爬架');for(const [x,y,h] of [[822,858,.9],[850,883,.6]]){cyl(x,y,.045,h,wood);rect(x-13,y-13,x+13,y+13,.045,linen,h);}
-function bathroom(a){rect(a+12,299,a+125,396,.018,mat('#aebeb8'));windowLine(a+12,399,a+125,403);rect(a+14,432,a+45,460,.36,linen,0,furniture,'卫生间 · 坐便器');const seat=cyl(a+30,456,.19,.12,linen,.3);seat.scale.z=1.3;rect(a+10,490,a+63,542,.76,black,0,furniture,'卫生间 · 洗手台');cyl(a+35,512,.22,.1,linen,.76);cyl(a+35,512,.15,.015,mat('#8d9f9e'),.865);cyl(a+35,496,.018,.18,dark,.82);cyl(a+100,314,.035,1.4,dark);cyl(a+100,314,.12,.04,dark,1.4);}bathroom(264);bathroom(647);
-cabinet(1248,936,1298.64,986.64,'阳台 · 洗衣机 600 × 600',.85,linen);const drum=new T.Mesh(new T.CylinderGeometry(.21,.21,.025,36),dark);drum.rotation.z=Math.PI/2;drum.position.set(X(1246),.44,Z(965));furniture.add(drum);cabinet(1251,995,1291,1039,'阳台 · 扫地机基站',.45,stone);cyl(1266,1025,.16,.09,dark);
-const reflectionTargets=[];
-for(const [x,z] of [[530,430],[1220,225]]){
-  const target=new T.WebGLCubeRenderTarget(128,{generateMipmaps:true,minFilter:T.LinearMipmapLinearFilter});
-  const probe=new T.CubeCamera(.1,40,target);probe.position.set(X(x),.9,Z(z));
-  probe.update(renderer,scene);reflectionTargets.push(target);
+function bathroom(a){rect(a+12,299,a+125,396,.018,mat('#aebeb8'));windowLine(a+12,399,a+125,403);rect(a+14,432,a+45,460,.36,linen,0,furniture,'卫生间 · 坐便器');const seat=cyl(a+30,456,.19,.12,linen,.3);seat.scale.z=1.3;rect(a+10,490,a+63,542,.76,black,0,furniture,'卫生间 · 洗手台');const ceramic=new T.MeshPhysicalMaterial({color:'#f4f1e9',roughness:.18,clearcoat:.4,side:T.DoubleSide});
+const profile=[[.025,.014],[.15,.014],[.215,.035],[.225,.09],[.205,.10],[.185,.048],[.025,.025]].map(([r,h])=>new T.Vector2(r,h));
+const basin=new T.Mesh(new T.LatheGeometry(profile,40),ceramic);basin.position.set(X(a+35),.76,Z(512));basin.castShadow=true;basin.receiveShadow=true;furniture.add(basin);cyl(a+35,512,.022,.007,chrome,.784);cyl(a+35,496,.018,.18,dark,.82);cyl(a+100,314,.035,1.4,dark);cyl(a+100,314,.12,.04,dark,1.4);}bathroom(264);bathroom(647);
+cabinet(1248,936,1298.64,986.64,'阳台 · 洗衣机 600 × 600',.85,linen);const drum=new T.Mesh(new T.CylinderGeometry(.21,.21,.025,36),dark);drum.rotation.z=Math.PI/2;drum.position.set(X(1246),.44,Z(965));furniture.add(drum);
+const rim=new T.Mesh(new T.TorusGeometry(.213,.023,10,40),chrome);rim.rotation.y=Math.PI/2;rim.position.copy(drum.position);rim.position.x-=.016;furniture.add(rim);
+const hatch=new T.Mesh(new T.CircleGeometry(.177,40),new T.MeshPhysicalMaterial({color:'#304048',metalness:.35,roughness:.17,clearcoat:1}));hatch.rotation.y=-Math.PI/2;hatch.position.copy(drum.position);hatch.position.x-=.025;furniture.add(hatch);
+rect(1246.5,942,1247.2,979,.075,black,.69);
+cabinet(1251,995,1291,1039,'阳台 · 扫地机基站',.45,stone);cyl(1266,1025,.16,.09,dark);
+const faucetCurve=new T.CatmullRomCurve3([new T.Vector3(X(848),.9,Z(318)),new T.Vector3(X(848),1.14,Z(318)),new T.Vector3(X(837),1.2,Z(318)),new T.Vector3(X(829),1.14,Z(328))]);
+const faucet=new T.Mesh(new T.TubeGeometry(faucetCurve,24,.012,10,false),chrome);faucet.castShadow=true;furniture.add(faucet);
+cyl(833,335,.025,.008,chrome,.916);
+// Four planar mirrors reflect the current viewpoint. Other mirror planes are hidden
+// during each capture to bound the cost and avoid recursive mirror rendering.
+const mirrors=[];
+for(const [x,z0,z1,bottom,height,east] of [[482.1,345.5,541.5,.1,2.45,true],[579.1,345.5,465.5,.1,2.45,false],[1171.1,159,268,0,2.6,true],[1274.7,157,407,.08,2.48,false]]){
+  const reflection=new Reflector(new T.PlaneGeometry((z1-z0)/84.4,height),{color:0xaaaaaa,textureWidth:512,textureHeight:512,clipBias:.002,multisample:2});
+  reflection.position.set(X(x),bottom+height/2,Z((z0+z1)/2));reflection.rotation.y=east?Math.PI/2:-Math.PI/2;
+  reflection.userData.name='银色镜面 · 实时平面反射';picks.push(reflection);furniture.add(reflection);mirrors.push(reflection);
+  const capture=reflection.onBeforeRender;
+  reflection.onBeforeRender=(renderer,scene,camera)=>{
+    if(scene.overrideMaterial)return;
+    const visibility=mirrors.map(m=>m.visible);
+    for(const m of mirrors)if(m!==reflection)m.visible=false;
+    try{capture(renderer,scene,camera);}finally{mirrors.forEach((m,i)=>m.visible=visibility[i]);}
+  };
 }
-for(const mesh of picks){
-  if(mesh.material!==mirror)continue;
-  const material=mirror.clone();material.envMap=reflectionTargets[mesh.position.x>X(1000)?1:0].texture;mesh.material=material;
-}
+const target=new T.WebGLRenderTarget(1,1,{type:T.HalfFloatType,samples:4});
+const composer=new EffectComposer(renderer,target);composer.addPass(new RenderPass(scene,camera));
+const ao=new SSAOPass(scene,camera,1,1,16);ao.kernelRadius=.32;ao.minDistance=.001;ao.maxDistance=.018;composer.addPass(ao);composer.addPass(new OutputPass());
+// Transparent glass must not occlude the AO normal/depth pass.
+const override=ao.overrideVisibility.bind(ao);ao.overrideVisibility=()=>{override();scene.traverse(o=>{if(o.isMesh&&o.material?.transparent)o.visible=false;});};
+let dirty=true,renderCount=0;controls.addEventListener('change',()=>dirty=true);
+function refreshReflections(){dirty=true;}
+function renderFrame(){composer.render();renderCount++;dirty=false;const w=renderer.domElement.clientWidth,h=renderer.domElement.clientHeight;for(const el of labelLayer.children){const p=el.anchor.clone().project(camera);el.style.left=(p.x*.5+.5)*w+'px';el.style.top=(-p.y*.5+.5)*h+'px';el.style.display=(p.z>1||p.z< -1||Math.abs(p.x)>1||Math.abs(p.y)>1||(labelFocus&&el.textContent!==labelFocus))?'none':'';}}
 const rooms=[['主卧',378,788,'横向轴线 3400 mm'],['衣帽间',527,436,'横向轴线 2700 mm'],['主卫',344,455,'横向轴线 1800 mm'],['公卫',720,454,'横向轴线 1800 mm'],['次卧',681,776,'横向轴线 2900 mm'],['书房',895,814,'横向轴线 2300 mm'],['客厅',1160,820,'右侧横向轴线 3900 mm'],['餐厨',1126,558,'开放式客餐厨'],['玄关',1229,261,'右上入户，薄柜靠右'],['阳台',1085,1006,'外挑阳台，家政区靠右']];
-const labelLayer=document.querySelector('#labels');for(const [name,x,y,desc]of rooms){const el=document.createElement('button');el.className='label';el.textContent=name;el.onclick=()=>{document.querySelector('#detail').textContent=name+' · '+desc;controls.target.set(X(x),0,Z(y));camera.position.set(X(x)+3,7,Z(y)+6);};labelLayer.append(el);el.anchor=new T.Vector3(X(x),.14,Z(y));}
-function reset(top=false){controls.target.set(0,0,.2);camera.position.set(top?0:-12,top?24:16,top?.21:17);controls.update();}reset();
+let labelFocus=null;const labelLayer=document.querySelector('#labels');for(const [name,x,y,desc]of rooms){const el=document.createElement('button');el.className='label';el.textContent=name;el.onclick=()=>{labelFocus=name;document.querySelector('#detail').textContent=name+' · '+desc;controls.target.set(X(x),0,Z(y));camera.position.set(X(x)+3,7,Z(y)+6);};labelLayer.append(el);el.anchor=new T.Vector3(X(x),.14,Z(y));}
+function reset(top=false){labelFocus=null;controls.target.set(0,0,.2);camera.position.set(top?0:-12,top?24:16,top?.21:17);controls.update();}reset();
 for(const b of document.querySelectorAll('[data-view]'))b.onclick=()=>{reset(b.dataset.view==='top');document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x===b));};
-document.querySelector('#walls').onchange=e=>walls.visible=e.target.checked;document.querySelector('#furniture').onchange=e=>furniture.visible=e.target.checked;document.querySelector('#names').onchange=e=>labelLayer.hidden=!e.target.checked;
-document.querySelector('#save').onclick=()=>{renderer.render(scene,camera);const a=document.createElement('a');a.download='户型-3D.png';a.href=renderer.domElement.toDataURL();a.click();};
+document.querySelector('#walls').onchange=e=>{walls.visible=e.target.checked;refreshReflections();};document.querySelector('#furniture').onchange=e=>{furniture.visible=e.target.checked;refreshReflections();};
+document.querySelector('#full-height').onchange=e=>{walls.scale.y=e.target.checked?1:1.15/CEILING;refreshReflections();};document.querySelector('#names').onchange=e=>labelLayer.hidden=!e.target.checked;
+document.querySelector('#save').onclick=()=>{renderFrame();const a=document.createElement('a');a.download='户型-3D.png';a.href=renderer.domElement.toDataURL();a.click();};
 const ray=new T.Raycaster(),pointer=new T.Vector2();let down;renderer.domElement.addEventListener('pointerdown',e=>down=[e.clientX,e.clientY]);renderer.domElement.addEventListener('pointerup',e=>{if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;const r=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hit=furniture.visible?ray.intersectObjects(picks)[0]:null;if(hit)document.querySelector('#detail').textContent=hit.object.userData.name;});
-function resize(){const v=document.querySelector('#view');renderer.setSize(v.clientWidth,v.clientHeight);camera.aspect=v.clientWidth/v.clientHeight;camera.fov=camera.aspect<1?76:36;camera.updateProjectionMatrix();}addEventListener('resize',resize);resize();
-renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera);const w=renderer.domElement.clientWidth,h=renderer.domElement.clientHeight;for(const el of labelLayer.children){const p=el.anchor.clone().project(camera);el.style.left=(p.x*.5+.5)*w+'px';el.style.top=(-p.y*.5+.5)*h+'px';el.style.display=p.z>1?'none':'';}});
-window.floorplan={scene,camera,controls,renderer,rooms,reset,walls,furniture};document.querySelector('#status').textContent='离线模型已就绪';
-const closeViews={living:[1120,780,-3.8,5,5.7],wardrobe:[530,410,3,4,4.5],entry:[1220,250,-3,3.8,4.2]};
+function resize(){const v=document.querySelector('#view');renderer.setSize(v.clientWidth,v.clientHeight);camera.aspect=v.clientWidth/v.clientHeight;camera.fov=camera.aspect<1?T.MathUtils.radToDeg(2*Math.atan(Math.tan(T.MathUtils.degToRad(18))/camera.aspect)):36;camera.updateProjectionMatrix();composer.setSize(v.clientWidth,v.clientHeight);dirty=true;}addEventListener('resize',resize);resize();
+renderer.setAnimationLoop(()=>{controls.update();if(dirty)renderFrame();});
+window.floorplan={scene,camera,controls,renderer,composer,ao,mirrors,rooms,reset,walls,furniture,renderFrame,get renderCount(){return renderCount;}};document.querySelector('#status').textContent='离线模型已就绪';
+const closeViews={living:[1120,780,-3.8,5,5.7],wardrobe:[530,420,0,3.7,2.9],entry:[1220,250,-.3,3.6,3.2]};
 for(const button of document.querySelectorAll('[data-focus]'))button.onclick=()=>{
-  const [x,z,dx,h,dz]=closeViews[button.dataset.focus];controls.target.set(X(x),.45,Z(z));camera.position.set(X(x)+dx,h,Z(z)+dz);controls.update();
+  labelFocus={living:'客厅',wardrobe:'衣帽间',entry:'玄关'}[button.dataset.focus];const [x,z,dx,h,dz]=closeViews[button.dataset.focus];controls.target.set(X(x),.45,Z(z));camera.position.set(X(x)+dx,h,Z(z)+dz);controls.update();
   document.querySelector('#detail').textContent=button.textContent+' · 拖动查看材质与细节';
   document.querySelectorAll('[data-view]').forEach(b=>b.classList.remove('active'));
 };
