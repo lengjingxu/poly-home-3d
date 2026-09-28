@@ -83,16 +83,44 @@ for(let y=687;y<900;y+=34)rect(777.5,y,778,y+.6,CEILING-.07,dark,.035);
 const floatingWhite=new T.MeshStandardMaterial({color:'#f2f1eb',roughness:.35});
 rect(808,660,867,837,1.15,floatingWhite,CEILING-1.15,furniture,'书房 · 悬空白色柜（下方留空 1.45 m）');
 for(let y=698;y<837;y+=39)rect(867,y,867.5,y+.55,1.08,dark,CEILING-1.12);
-cabinet(1004,295,1105,352,'厨房 · 黑色冰箱柜',1.65);cabinet(1107,295,1172,352,'厨房 · 黑色零食柜',1.4);
+// White cabinet surround with silver-grey refrigerator doors, from the reference photo.
+const fridgeWhite=new T.MeshStandardMaterial({color:'#ecebe5',roughness:.35});
+const fridgeSilver=new T.MeshStandardMaterial({color:'#b8bec3',metalness:.55,roughness:.33});
+rect(1004,295,1105,352,CEILING,fridgeWhite,0,furniture,'餐厨 · 白色与银灰色冰箱');
+rect(1008,352,1101,353,.12,dark,.05);
+for(const [a,c] of [[1008,1053.8],[1055.2,1101]]){
+  rect(a,352,c,354,1.18,fridgeWhite,1.0);
+  rect(a,352,c,354,.39,fridgeSilver,.19);rect(a,352,c,354,.39,fridgeSilver,.60);
+}
+rect(1008,353,1101,354,.018,dark,.986);
+rect(1008,352,1101,353.5,.34,fridgeWhite,2.23);
+cabinet(1107,295,1172,352,'厨房 · 黑色零食柜',1.4);
 cabinet(1277,154,1310,409,'玄关 · 到顶镜面薄柜',1.12,black,'west');
 rect(1169,159,1171,268,CEILING,mirror,0,furniture,'玄关 · 银色镜面墙');
 rect(1274.8,157,1275.2,407,CEILING-.12,mirror,.08,furniture,'玄关 · 银色镜面墙');
 for(let y=169;y<265;y+=32)rect(1168.8,y,1171.3,y+.5,CEILING,chrome);
-cabinet(1276,418,1310,653,'餐厅 · 黑色展示柜',1.3,black,'west');
-cabinet(1256,437,1310,604,'餐厅 · 凸出银色餐边柜',.68,silver,'west');
-rect(1255,436,1311,605,.035,chrome,.68);
+// A projecting silver frame, open illuminated niche and six lower drawers.
+const sideboardSilver=new T.MeshStandardMaterial({color:'#cbc9c3',metalness:.48,roughness:.34});
+rect(1276,418,1310,437,CEILING,black);rect(1276,604,1310,653,CEILING,black);
+rect(1276,437,1310,604,.28,black);rect(1276,437,1310,604,CEILING-2.34,black,2.34);
+rect(1305,437,1310,604,CEILING,black);
+rect(1256,437,1305,440,2.06,sideboardSilver,.28,furniture,'餐厅 · 银色餐边柜边框');
+rect(1256,601,1305,604,2.06,sideboardSilver,.28);
+rect(1256,437,1305,604,.035,sideboardSilver,2.305);
+rect(1301,440,1305,601,2.025,sideboardSilver,.28);
+rect(1256,440,1301,601,.90,sideboardSilver,.28,furniture,'餐厅 · 银色餐边柜（上部开放格，下部抽屉）');
+for(let row=0;row<3;row++)for(let col=0;col<2;col++){
+  const z=441+col*80;rect(1254.6,z,1256,z+78,.282,sideboardSilver,.293+row*.296);
+}
+rect(1253,437,1306,604,.035,sideboardSilver,1.18);
+rect(1257,440,1302,601,.025,sideboardSilver,1.88);
+// Small reference accessories indicate the depth of the open niche.
+const bottle=mat('#343d28');for(const z of [459,471]){cyl(1290,z,.028,.14,bottle,1.905);cyl(1290,z,.012,.035,chrome,2.045);}
+rect(1273,566,1296,591,.28,wine,1.215,furniture,'餐边柜 · 红色咖啡机示意');
+rect(1268,569,1274,587,.025,chrome,1.26);cyl(1267,578,.035,.045,linen,1.285);
+
 cabinet(807,294,859,548,'厨房 · 黑色操作台',.86,black,'east');rect(806,293,860,549,.04,silver,.86);rect(813,319,852,348,.025,dark,.88);rect(816,322,849,345,.026,mat('#aab7b7'),.889);cyl(848,318,.025,.22,dark,.88);
-rect(922,448,1019,536,.9,wine,0,furniture,'厨房 · 磨砂酒红岛台');rect(919,445,1022,539,.04,wine,.9);rect(1022,454,1124,529,.05,black,.76,furniture,'餐桌 · 按图示轮廓估算');for(const z of [464,519])tube([1113,.02,z],[1113,.76,z],.021);
+rect(922,448,1019,536,.9,wine,0,furniture,'厨房 · 磨砂酒红岛台');rect(919,445,1022,539,.04,wine,.9);rect(1022,454,1124,529,.05,wood,.76,furniture,'餐桌 · 木纹台面（参考图）');for(const z of [464,519])tube([1113,.02,z],[1113,.76,z],.021);
 for(const [x,y] of [[1040,440],[1091,440],[1040,543],[1091,543]]){
   soft(x-15,y-15,x+15,y+15,.065,leather,.43,'餐厅 · 黑皮金属餐椅');
   const back=y<480?y-14:y+14;
@@ -263,5 +291,14 @@ document.querySelector('#interior').onclick=()=>{
   labelFocus='客厅';controls.autoRotate=false;document.querySelector('#tour').textContent='镜头巡游';document.querySelector('#tour').setAttribute('aria-pressed','false');
   resize();refreshReflections();moveCamera(new T.Vector3(X(1088),1.65,Z(868)),new T.Vector3(X(1230),1.15,Z(744)));
   document.querySelector('#detail').textContent='室内视角 · 拖动环顾，点击立体返回全屋';
+  document.querySelectorAll('[data-view]').forEach(b=>b.classList.remove('active'));
+};
+
+document.querySelector('#entry-view').onclick=()=>{
+  if(!interior)savedFullHeight=document.querySelector('#full-height').checked;
+  interior=true;ceiling.visible=true;walls.visible=true;walls.scale.y=1;document.querySelector('#full-height').checked=true;document.querySelector('#walls').checked=true;
+  labelFocus='餐厨';resize();refreshReflections();
+  moveCamera(new T.Vector3(X(1064),1.65,Z(692)),new T.Vector3(X(1160),1.36,Z(366)));
+  document.querySelector('#detail').textContent='客厅看向入户 · 左侧白色与银灰冰箱，右侧银色餐边柜';
   document.querySelectorAll('[data-view]').forEach(b=>b.classList.remove('active'));
 };
