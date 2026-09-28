@@ -32,6 +32,7 @@ const blue=new T.MeshStandardMaterial({color:'#153b92',roughness:1,bumpMap:textu
 const glass=new T.MeshPhysicalMaterial({color:'#b8d1d5',transparent:true,opacity:.22,roughness:.08,depthWrite:false});
 plaster.bumpMap=textures.plaster;plaster.bumpScale=.001;
 stone.bumpMap=textures.plaster;stone.bumpScale=.001;stone.roughness=.5;
+const livingFloor=new T.MeshStandardMaterial({color:'#929497',roughness:.58,bumpMap:textures.plaster,bumpScale:.0006});
 const floorWood=new T.MeshStandardMaterial({map:textures.floor,roughness:.55,bumpMap:textures.floor,bumpScale:.0018});
 // Source drawing origin (264,282); 84.4 pixels per metre. No geographic orientation inferred.
 const CEILING=2.6; /* Assumed ceiling height. */ const X=p=>(p-264)/84.4-6.25,Z=p=>(p-282)/84.4-3.7;
@@ -48,6 +49,8 @@ function floor(a,b,c,d,m,y=0){
 }
 floor(248,270,1319,980,floorWood);floor(1152,142,1319,282,stone);floor(890,922,1319,1054,stone,.006);
 floor(264,282,417,551,stone,.004);floor(644,282,795,551,stone,.004);floor(795,282,1319,660,stone,.004);
+// User-confirmed neutral grey living floor; the study keeps its existing finish.
+floor(990,660,1319,922,livingFloor,.004);
 const ground=new T.Mesh(new T.PlaneGeometry(200,200),mat('#e1dfd8'));ground.rotation.x=-Math.PI/2;ground.position.y=-.18;ground.receiveShadow=true;scene.add(ground);
 // Dressing/primary bedroom and study/living room connections have no walls or doors. Exterior and interior walls are split at the drawing's door/window openings.
 [[248,270,264,654],[248,710,264,922],[248,970,805,984],[264,270,292,286],[391,270,427,286],[622,270,654,286],[744,270,844,286],[844,270,1167,286],[1152,142,1168,282],[1152,134,1180,150],[1273,134,1320,150],[1304,142,1320,922],[264,908,314,924],[527,908,580,924],[753,908,806,924],[806,908,892,924],[980,908,998,924],[1250,908,1320,924],[884,922,900,1054],[1304,922,1320,1054],[407,286,424,552],[634,286,651,552],[784,286,801,552],[264,545,329,559],[398,545,424,559],[642,545,665,559],[730,545,801,559],[544,650,560,910],[784,650,801,705],[784,744,801,910],[560,649,707,665]].forEach(v=>wall(...v));
