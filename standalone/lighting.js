@@ -23,9 +23,15 @@ export function createLighting({scene,home,ceiling,renderer,sun,sky,fill,ground,
     light.userData.power=power;home.add(light);sources.push(light);
   }
   strip(863,748,.025,1.94,1.43,4.5);
-  strip(1254,521,.025,1.95,.67,5);
+  strip(1259,521,.025,1.82,1.864,4.5);
   strip(855,421,.025,2.65,.89,3.5);
-  strip(1029,714,.62,.018,2.35,3.5);
+  strip(1070,491,1.72,.038,2.08,4);
+  const bar=new T.Mesh(new T.CylinderGeometry(.026,.026,1.8,20),new T.MeshStandardMaterial({color:0x665a43,metalness:.85,roughness:.25}));
+  bar.rotation.z=Math.PI/2;bar.position.set(X(1070),2.12,Z(491));home.add(bar);
+  for(const dx of [-.72,.72]){
+    const wire=new T.Mesh(new T.CylinderGeometry(.004,.004,.46,6),new T.MeshStandardMaterial({color:0x242426}));
+    wire.position.set(X(1070)+dx,2.35,Z(491));home.add(wire);
+  }
   const presets={
     day:{sky:.55,sun:3.1,fill:.6,env:.55,exposure:.95,local:.10,bloom:.10,position:[-5,12,9],sunColor:0xfff0dc,background:0xdddcd6,ground:0xd4d1c9},
     dusk:{sky:.22,sun:2.2,fill:.38,env:.32,exposure:1.0,local:.85,bloom:.25,position:[-8,5,6],sunColor:0xffb469,background:0x252b36,ground:0x303642},
