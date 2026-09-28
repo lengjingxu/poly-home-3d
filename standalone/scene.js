@@ -298,7 +298,7 @@ document.querySelector('#entry-view').onclick=()=>{
   if(!interior)savedFullHeight=document.querySelector('#full-height').checked;
   interior=true;ceiling.visible=true;walls.visible=true;walls.scale.y=1;document.querySelector('#full-height').checked=true;document.querySelector('#walls').checked=true;
   labelFocus='餐厨';resize();refreshReflections();
-  moveCamera(new T.Vector3(X(1064),1.65,Z(692)),new T.Vector3(X(1160),1.36,Z(366)));
+  moveCamera(new T.Vector3(X(1040),1.65,Z(770)),new T.Vector3(X(1170),1.36,Z(430)));
   document.querySelector('#detail').textContent='客厅看向入户 · 左侧白色与银灰冰箱，右侧银色餐边柜';
   document.querySelectorAll('[data-view]').forEach(b=>b.classList.remove('active'));
 };
